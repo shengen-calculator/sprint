@@ -1,0 +1,29 @@
+div#root {
+    font: 14px 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    color: #4d4d4d;
+    padding: 20px 45px;
+    max-width: 850px;
+    margin: 0 auto;
+}
+
+a.active {
+    color: orange !important;
+}
+
+a:hover, a:visited, a:link, a:active {
+    text-decoration: none !important;
+}
+
+nav {
+    padding-bottom: 20px;
+    width: 60%;
+    float: left;
+}
+
+span.logout {
+    color: #007bff;
+}
+
+span.logout:hover {
+    cursor: pointer;
+}

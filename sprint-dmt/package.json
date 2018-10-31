@@ -1,0 +1,41 @@
+{
+  "name": "sprint-dmt",
+  "version": "1.0.0",
+  "description": "data migration tools",
+  "scripts": {
+    "test:db": "babel-node src/mssql.test.js",
+    "test:cloud": "babel-node src/cloud.test.js",
+    "import:catalog": "babel-node src/catalog.js",
+    "import:price": "babel-node src/price.main.js",
+    "lint": "esw src --color",
+    "lint:watch": "npm run lint -- --watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shengen-calculator/sprint.git"
+  },
+  "keywords": [
+    "sprint",
+    "application",
+    "autopart"
+  ],
+  "author": "Vasyl Suddya",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/shengen-calculator/sprint/issues"
+  },
+  "homepage": "https://github.com/shengen-calculator/sprint#readme",
+  "devDependencies": {
+    "@babel/cli": "7.0.0",
+    "@babel/core": "7.0.0",
+    "@babel/node": "7.0.0",
+    "@babel/preset-env": "7.0.0",
+    "@babel/register": "7.0.0",
+    "chalk": "2.4.1",
+    "eslint": "5.5.0",
+    "eslint-plugin-import": "2.14.0",
+    "eslint-watch": "4.0.2",
+    "firebase": "5.5.4",
+    "mssql": "4.2.1"
+  }
+}
