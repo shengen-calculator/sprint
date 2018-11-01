@@ -7,6 +7,7 @@
     "test:cloud": "babel-node src/cloud.test.js",
     "import:catalog": "babel-node src/catalog.js",
     "import:price": "babel-node src/price.main.js",
+    "import": "babel-node src/import-runner.js price",
     "lint": "esw src --color",
     "lint:watch": "npm run lint -- --watch"
   },
