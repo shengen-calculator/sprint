@@ -38,5 +38,8 @@
     "eslint-watch": "4.0.2",
     "firebase": "5.5.4",
     "mssql": "4.2.1"
+  },
+  "dependencies": {
+    "numeral": "^2.0.6"
   }
 }

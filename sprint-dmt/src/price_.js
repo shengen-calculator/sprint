@@ -6,8 +6,8 @@ class PriceImport extends Import {
     console.log("PriceImport created")
   }
 
-  PrimitiveOperation1 (val){
-    console.log('PriceImport PrimitiveOperation1' + val)
+  getSourceTableName (){
+    return "Каталоги поставщиков";
   }
 
   PrimitiveOperation2 (val){
