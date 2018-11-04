@@ -5,9 +5,8 @@
   "scripts": {
     "test:db": "babel-node src/mssql.test.js",
     "test:cloud": "babel-node src/cloud.test.js",
-    "import:catalog": "babel-node src/catalog.js",
-    "import:price": "babel-node src/price.main.js",
-    "import": "babel-node src/import-runner.js price",
+    "import:catalog": "babel-node src/import-runner.js catalog",
+    "import:price": "babel-node src/import-runner.js price",
     "lint": "esw src --color",
     "lint:watch": "npm run lint -- --watch"
   },
