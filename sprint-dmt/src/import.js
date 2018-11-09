@@ -20,6 +20,11 @@ class Import {
         if(!process.argv[3]) {
           console.log(chalk.green(`Firestore authentication success`));
         }
+
+        if(this.getDatabaseName()) {
+          configSource.database = this.getDatabaseName();
+        }
+
         sql.connect(configSource, err => {
           // ... error checks
           if (err) {
@@ -135,6 +140,10 @@ class Import {
   }
 
   getItemByRow() {
+
+  }
+
+  getDatabaseName() {
 
   }
 }
