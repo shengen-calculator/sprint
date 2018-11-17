@@ -88,12 +88,13 @@ class Import {
 
     request.on('error', err => {
       // May be emitted multiple times
+      const delay = Math.ceil(Math.random()*100000);
       console.log(chalk.red(`bundle: ${bundleNumber} batchIndex: ${batchIndex} error: ${err}`));
-      console.log(`try to run import again in 60 sec`);
+      console.log(`try to run import again in ${delay/1000} sec`);
 
       setTimeout(() => {
         this.handleBundleAsync(sql, bundleNumber, batchIndex);
-      }, 60000);
+      }, delay);
     });
 
     request.on('done', () => {
