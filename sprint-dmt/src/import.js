@@ -17,11 +17,11 @@ class Import {
   RunImport() {
     auth.signInWithEmailAndPassword(user, password)
       .then(() => {
-        if(!process.argv[3]) {
+        if (!process.argv[3]) {
           console.log(chalk.green(`Firestore authentication success`));
         }
 
-        if(this.getDatabaseName()) {
+        if (this.getDatabaseName()) {
           configSource.database = this.getDatabaseName();
         }
 
@@ -31,15 +31,13 @@ class Import {
             console.log(chalk.red(`Source db connection error: ${err.message}`));
             process.exit();
           } else {
-            if(!process.argv[3]) {
+            if (!process.argv[3]) {
               console.log(chalk.green(`Source db authentication success`));
             }
 
             if (process.argv[3]) {
               // ... start import
-
               this.handleBundleAsync(sql, process.argv[3], 0);
-
             } else {
               const request = new sql.Request();
               const countQuery = `select count(1) as Quantity from [${this.getSourceTableName()}]`;
@@ -89,36 +87,42 @@ class Import {
 
     request.on('error', err => {
       // May be emitted multiple times
-      console.log(chalk.red(err));
-      process.exit();
+      console.log(chalk.red(`bundle: ${bundleNumber} batchIndex: ${batchIndex} error: ${err}`));
+      console.log(`try to run import again in 60 sec`);
+
+      setTimeout(() => {
+        this.handleBundleAsync(sql, bundleNumber, batchIndex);
+      }, 60000);
     });
 
     request.on('done', () => {
-      console.log(`There are: ${batch._mutations.length} rows`);
-      batch.commit()
-        .then((err) => {
-          if (err) {
-            console.log(chalk.red(err));
-            process.exit();
-          }
+      console.log(`There are (${bundleNumber} - ${batchIndex}): ${batch._mutations.length} rows`);
+      if(batch._mutations.length > 0) {
+        batch.commit()
+          .then((err) => {
+            if (err) {
+              console.log(chalk.red(err));
+              process.exit();
+            }
 
-          if (batchIndex === this.maxBundleSize - 1) {
-            const endTime = new Date();
-            console.log(chalk.green(`Elapsed time: ${(endTime.getTime() -
-              this.startTime.getTime()) / 1000} sec.`));
-            process.send(bundleNumber);
+            if (batchIndex === this.maxBundleSize - 1) {
+              const endTime = new Date();
+              console.log(chalk.green(`Elapsed time: ${(endTime.getTime() -
+                this.startTime.getTime()) / 1000} sec.`));
+              process.send(bundleNumber);
 
+              process.exit();
+            } else {
+              //console.log(`Batch # ${batchIndex} saved (bundle # ${bundleNumber})`);
+              batchIndex++;
+              this.handleBundleAsync(sql, bundleNumber, batchIndex);
+            }
+          })
+          .catch(function (error) {
+            console.error("Error save batch: ", error);
             process.exit();
-          } else {
-            //console.log(`Batch # ${batchIndex} saved (bundle # ${bundleNumber})`);
-            batchIndex++;
-            this.handleBundleAsync(sql, bundleNumber, batchIndex);
-          }
-        })
-        .catch(function (error) {
-          console.error("Error save batch: ", error);
-          process.exit();
-        });
+          });
+      }
     });
   }
 
