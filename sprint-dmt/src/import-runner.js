@@ -9,7 +9,7 @@ const bundleEndNumber = Number.parseInt(process.argv[4]);
 
 
 if (bundleStartNumber >= 0 && bundleEndNumber >= 0) {
-  for (let i = bundleStartNumber; i < bundleEndNumber; i++) {
+  for (let i = bundleStartNumber; i <= bundleEndNumber; i++) {
     const runner = fork('src/import-fabric.js', [importType, i]);
     runner.send('start');
     runner.on('message', num => {
