@@ -3,6 +3,7 @@ import sql from 'mssql';
 import {configSource} from './mssql.connection';
 import {auth, user, password, database} from './firestore';
 import numeral from 'numeral';
+import { logger } from './logger';
 
 /* eslint-disable no-console */
 
@@ -107,8 +108,16 @@ class Import {
 
             if (batchIndex === this.maxBundleSize - 1) {
               const endTime = new Date();
-              console.log(chalk.green(`Elapsed time: ${(endTime.getTime() -
+              console.log(chalk.green(`Bundle ${bundleNumber} Elapsed time: ${(endTime.getTime() -
                 this.startTime.getTime()) / 1000} sec.`));
+
+              logger.log({
+                level: 'info',
+                message: `Bundle ${bundleNumber} Elapsed time: ${(endTime.getTime() -
+                  this.startTime.getTime()) / 1000} sec.`
+              });
+
+
               process.send(bundleNumber);
 
               process.exit();
@@ -120,6 +129,10 @@ class Import {
           })
           .catch(function (error) {
             console.error("Error save batch: ", error);
+            logger.log({
+              level: 'error',
+              message: `Error save batch:  ${error} `
+            });
             process.exit();
           });
       }

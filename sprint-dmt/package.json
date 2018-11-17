@@ -2,7 +2,7 @@
   "name": "sprint-dmt",
   "version": "1.0.0",
   "description": "data migration tools",
-  "scripts": {   
+  "scripts": {
     "import:catalog": "babel-node src/import-runner.js catalog",
     "import:price": "babel-node src/import-runner.js price",
     "lint": "esw src --color",
@@ -37,6 +37,7 @@
     "mssql": "4.2.1"
   },
   "dependencies": {
-    "numeral": "^2.0.6"
+    "numeral": "^2.0.6",
+    "winston": "^3.1.0"
   }
 }
