@@ -13,6 +13,14 @@ class PriceImport extends Import {
     return "prices";
   }
 
+  getMaxNumberSimultaneousImports() {
+    return 5;
+  }
+
+  getAverageImportTime() {
+    return 150;
+  }
+
   getSelectQuery(bundleNumber, batchIndex) {
     return `
         SELECT *

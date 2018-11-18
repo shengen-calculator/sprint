@@ -13,6 +13,8 @@ class Import {
     this.startTime = startTime;
     this.maxBatchSize = maxBatchSize;
     this.maxBundleSize = maxBundleSize;
+    this.delayedImportNumber = 0;
+    this.maxDelay = 0;
   }
 
   RunImport() {
@@ -38,7 +40,22 @@ class Import {
 
             if (process.argv[3]) {
               // ... start import
-              this.handleBundleAsync(sql, process.argv[3], 0);
+
+              const delay = this.getAverageImportTime()* 1000 *
+                Math.floor((parseInt(process.argv[3]))/
+                this.getMaxNumberSimultaneousImports());
+              setTimeout(() => {
+                this.handleBundleAsync(sql, process.argv[3], 0);
+              }, delay);
+              console.log(`Import starts in ${delay} sec`);
+
+              if(delay > this.maxDelay) {
+                this.maxDelay = delay;
+              }
+
+              //this.handleBundleAsync(sql, process.argv[3], 0);
+
+
             } else {
               const request = new sql.Request();
               const countQuery = `select count(1) as Quantity from [${this.getSourceTableName()}]`;
@@ -88,7 +105,13 @@ class Import {
 
     request.on('error', err => {
       // May be emitted multiple times
-      const delay = Math.ceil(Math.random()*100000);
+
+      const commonDelay = this.maxDelay + this.getAverageImportTime() +
+        this.getAverageImportTime() * Math.floor(this.delayedImportNumber/
+          this.getMaxNumberSimultaneousImports());
+      this.delayedImportNumber++;
+      const delay = commonDelay * 1000 - new Date() + this.startTime;
+
       console.log(chalk.red(`bundle: ${bundleNumber} batchIndex: ${batchIndex} error: ${err}`));
       console.log(`try to run import again in ${delay/1000} sec`);
 
@@ -162,6 +185,14 @@ class Import {
   }
 
   getDatabaseName() {
+
+  }
+
+  getMaxNumberSimultaneousImports() {
+
+  }
+
+  getAverageImportTime() {
 
   }
 }

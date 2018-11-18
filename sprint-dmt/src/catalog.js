@@ -13,6 +13,14 @@ class CatalogImport extends Import {
     return "products";
   }
 
+  getMaxNumberSimultaneousImports() {
+    return 10;
+  }
+
+  getAverageImportTime() {
+    return 160;
+  }
+
   getSelectQuery(bundleNumber, batchIndex) {
     return `
         SELECT [Каталог запчастей].*, Брэнды.*
