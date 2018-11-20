@@ -3,8 +3,6 @@ import Import from './import';
 class PriceImport extends Import {
   constructor(maxBatchSize, maxBundleSize, startTime) {
     super(maxBatchSize, maxBundleSize, startTime);
-    this.maxBatchSize = 1;
-    this.maxBundleSize = 5;
   }
 
   getSourceTableName() {
@@ -13,14 +11,6 @@ class PriceImport extends Import {
 
   getTargetCollectionName() {
     return "prices";
-  }
-
-  getMaxNumberSimultaneousImports() {
-    return 5;
-  }
-
-  getAverageImportTime() {
-    return 150;
   }
 
   getSelectQuery(bundleNumber, batchIndex) {

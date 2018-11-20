@@ -13,8 +13,7 @@ class Import {
     this.startTime = startTime;
     this.maxBatchSize = maxBatchSize;
     this.maxBundleSize = maxBundleSize;
-    this.delayedImportNumber = 0;
-    this.maxDelay = 0;
+    this.postponeTime = 150000;
   }
 
   RunImport() {
@@ -32,6 +31,10 @@ class Import {
           // ... error checks
           if (err) {
             console.log(chalk.red(`Source db connection error: ${err.message}`));
+            logger.log({
+              level: 'error',
+              message: `Source db connection error: ${err.message}`
+            });
             process.exit();
           } else {
             if (!process.argv[3]) {
@@ -40,21 +43,7 @@ class Import {
 
             if (process.argv[3]) {
               // ... start import
-
-              const delay = this.getAverageImportTime()* 1000 *
-                Math.floor((parseInt(process.argv[3]))/
-                this.getMaxNumberSimultaneousImports());
-              setTimeout(() => {
-                this.handleBundleAsync(sql, process.argv[3], 0);
-              }, delay);
-              console.log(`Import starts in ${delay} sec`);
-
-              if(delay > this.maxDelay) {
-                this.maxDelay = delay;
-              }
-
-              //this.handleBundleAsync(sql, process.argv[3], 0);
-
+              this.handleBundleAsync(sql, process.argv[3], 0);
 
             } else {
               const request = new sql.Request();
@@ -84,7 +73,11 @@ class Import {
           }
         });
       }).catch(e => {
-      console.log(chalk.red(`Firestore connection error: ${e.message}`))
+      console.log(chalk.red(`Firestore connection error: ${e.message}`));
+      logger.log({
+        level: 'error',
+        message: `Firestore connection error: ${e.message}`
+      });
     });
   }
 
@@ -106,18 +99,16 @@ class Import {
     request.on('error', err => {
       // May be emitted multiple times
 
-      const commonDelay = this.maxDelay + this.getAverageImportTime() +
-        this.getAverageImportTime() * Math.floor(this.delayedImportNumber/
-          this.getMaxNumberSimultaneousImports());
-      this.delayedImportNumber++;
-      const delay = commonDelay * 1000 - new Date() + this.startTime;
-
       console.log(chalk.red(`bundle: ${bundleNumber} batchIndex: ${batchIndex} error: ${err}`));
-      console.log(`try to run import again in ${delay/1000} sec`);
+      logger.log({
+        level: 'error',
+        message: `bundle: ${bundleNumber} batchIndex: ${batchIndex} import error: ${err.message}`
+      });
+      console.log(`try to run import again in ${this.postponeTime/1000} sec`);
 
       setTimeout(() => {
         this.handleBundleAsync(sql, bundleNumber, batchIndex);
-      }, delay);
+      }, this.postponeTime);
     });
 
     request.on('done', () => {
@@ -127,6 +118,10 @@ class Import {
           .then((err) => {
             if (err) {
               console.log(chalk.red(err));
+              logger.log({
+                level: 'error',
+                message: `Batch commit error: ${err}`
+              });
               process.exit();
             }
 
@@ -185,14 +180,6 @@ class Import {
   }
 
   getDatabaseName() {
-
-  }
-
-  getMaxNumberSimultaneousImports() {
-
-  }
-
-  getAverageImportTime() {
 
   }
 }
