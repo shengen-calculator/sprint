@@ -3,8 +3,6 @@ import Import from './import';
 class CatalogImport extends Import {
   constructor(maxBatchSize, maxBundleSize, startTime) {
     super(maxBatchSize, maxBundleSize, startTime);
-    this.maxBatchSize = 1;
-    this.maxBundleSize = 5;
   }
 
   getSourceTableName() {
