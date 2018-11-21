@@ -126,20 +126,7 @@ class Import {
             }
 
             if (batchIndex === this.maxBundleSize - 1) {
-              const endTime = new Date();
-              console.log(chalk.green(`Bundle ${bundleNumber} Elapsed time: ${(endTime.getTime() -
-                this.startTime.getTime()) / 1000} sec.`));
-
-              logger.log({
-                level: 'info',
-                message: `Bundle ${bundleNumber} Elapsed time: ${(endTime.getTime() -
-                  this.startTime.getTime()) / 1000} sec.`
-              });
-
-
-              process.send(bundleNumber);
-
-              process.exit();
+              this.showBundleInfo(bundleNumber);
             } else {
               //console.log(`Batch # ${batchIndex} saved (bundle # ${bundleNumber})`);
               batchIndex++;
@@ -154,8 +141,25 @@ class Import {
             });
             process.exit();
           });
+      } else {
+        this.showBundleInfo(bundleNumber);
       }
     });
+  }
+
+  showBundleInfo(bundleNumber) {
+    const endTime = new Date();
+    console.log(chalk.green(`Bundle ${bundleNumber} Elapsed time: ${(endTime.getTime() -
+      this.startTime.getTime()) / 1000} sec.`));
+
+    logger.log({
+      level: 'info',
+      message: `Bundle ${bundleNumber} Elapsed time: ${(endTime.getTime() -
+        this.startTime.getTime()) / 1000} sec.`
+    });
+
+    process.send(bundleNumber);
+    process.exit();
   }
 
   static trimString(str) {
