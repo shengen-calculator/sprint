@@ -5,6 +5,7 @@
   "scripts": {
     "import:catalog": "babel-node src/import-runner.js catalog",
     "import:price": "babel-node src/import-runner.js price",
+    "import:analog": "babel-node src/import-runner.js analog",
     "lint": "esw src --color",
     "lint:watch": "npm run lint -- --watch"
   },
