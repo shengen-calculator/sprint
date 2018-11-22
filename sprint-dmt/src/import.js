@@ -3,7 +3,7 @@ import sql from 'mssql';
 import {configSource} from './mssql.connection';
 import {auth, user, password, database} from './firestore';
 import numeral from 'numeral';
-import { logger } from './logger';
+import {logger} from './logger';
 
 /* eslint-disable no-console */
 
@@ -14,6 +14,7 @@ class Import {
     this.maxBatchSize = maxBatchSize;
     this.maxBundleSize = maxBundleSize;
     this.postponeTime = 150000;
+    this.importedBatchNumber = 0;
   }
 
   RunImport() {
@@ -98,13 +99,13 @@ class Import {
 
     request.on('error', err => {
       // May be emitted multiple times
-
+      this.importedBatchNumber--;
       console.log(chalk.red(`bundle: ${bundleNumber} batchIndex: ${batchIndex} error: ${err}`));
       logger.log({
         level: 'error',
         message: `bundle: ${bundleNumber} batchIndex: ${batchIndex} import error: ${err.message}`
       });
-      console.log(`try to run import again in ${this.postponeTime/1000} sec`);
+      console.log(`try to run import again in ${this.postponeTime / 1000} sec`);
 
       setTimeout(() => {
         this.handleBundleAsync(sql, bundleNumber, batchIndex);
@@ -113,7 +114,8 @@ class Import {
 
     request.on('done', () => {
       console.log(`There are (${bundleNumber} - ${batchIndex}): ${batch._mutations.length} rows`);
-      if(batch._mutations.length > 0) {
+      this.importedBatchNumber++;
+      if (batch._mutations.length > 0) {
         batch.commit()
           .then((err) => {
             if (err) {
@@ -125,13 +127,7 @@ class Import {
               process.exit();
             }
 
-            if (batchIndex === this.maxBundleSize - 1) {
-              this.showBundleInfo(bundleNumber);
-            } else {
-              //console.log(`Batch # ${batchIndex} saved (bundle # ${bundleNumber})`);
-              batchIndex++;
-              this.handleBundleAsync(sql, bundleNumber, batchIndex);
-            }
+
           })
           .catch(function (error) {
             console.error("Error save batch: ", error);
@@ -141,9 +137,16 @@ class Import {
             });
             process.exit();
           });
-      } else {
-        this.showBundleInfo(bundleNumber);
       }
+
+      if (this.importedBatchNumber === this.maxBundleSize) {
+        this.showBundleInfo(bundleNumber);
+      } else {
+        //console.log(`Batch # ${batchIndex} saved (bundle # ${bundleNumber})`);
+        batchIndex++;
+        this.handleBundleAsync(sql, bundleNumber, batchIndex);
+      }
+
     });
   }
 
