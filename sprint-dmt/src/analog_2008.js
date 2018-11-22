@@ -3,6 +3,8 @@ import Import from './import';
 class AnalogImport extends Import {
   constructor(maxBatchSize, maxBundleSize, startTime) {
     super(maxBatchSize, maxBundleSize, startTime);
+    this.maxBatchSize = 10;
+    this.maxBundleSize = 3;
   }
 
   getSourceTableName() {
@@ -43,13 +45,13 @@ class AnalogImport extends Import {
 
   getItemByRow(row) {
     return {
-      supplier: row['Supplier'],
-      number: row['Number'],
-      shortNumber: row['ShortNumber'],
-      brand: row['Brand'],
-      analogNumber: row['NumberAnalog'],
-      analogShortNumber: row['ShortNumberAnalog'],
-      analogBrand: row['BrandAnalog']
+      supplier: row['Supplier'].trim(),
+      number: row['Number'].trim(),
+      shortNumber: row['ShortNumber'].trim().toUpperCase(),
+      brand: row['Brand'].trim(),
+      analogNumber: row['NumberAnalog'].trim(),
+      analogShortNumber: row['ShortNumberAnalog'].trim().toUpperCase(),
+      analogBrand: row['BrandAnalog'].trim()
     };
   }
 }
