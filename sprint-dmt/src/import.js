@@ -3,7 +3,7 @@ import sql from 'mssql';
 import {configSource} from './mssql.connection';
 import {auth, user, password, database} from './firestore';
 import numeral from 'numeral';
-import {logger} from './logger';
+import {logger, infoLogger} from './logger';
 
 /* eslint-disable no-console */
 
@@ -14,7 +14,7 @@ class Import {
     this.maxBatchSize = maxBatchSize;
     this.maxBundleSize = maxBundleSize;
     this.postponeTime = 150000;
-    this.importedBatchNumber = 0;
+    this.errorList = [];
   }
 
   RunImport() {
@@ -99,7 +99,7 @@ class Import {
 
     request.on('error', err => {
       // May be emitted multiple times
-      this.importedBatchNumber--;
+      this.errorList[batchIndex] = true;
       console.log(chalk.red(`bundle: ${bundleNumber} batchIndex: ${batchIndex} error: ${err}`));
       logger.log({
         level: 'error',
@@ -114,8 +114,12 @@ class Import {
 
     request.on('done', () => {
       console.log(`There are (${bundleNumber} - ${batchIndex}): ${batch._mutations.length} rows`);
-      this.importedBatchNumber++;
+      infoLogger.log({
+        level: 'info',
+        message: `There are (${bundleNumber} - ${batchIndex}): ${batch._mutations.length} rows`
+      });
       if (batch._mutations.length > 0) {
+
         batch.commit()
           .then((err) => {
             if (err) {
@@ -126,7 +130,15 @@ class Import {
               });
               process.exit();
             }
+            this.errorList[batchIndex] = false;
 
+            if (batchIndex === this.maxBundleSize - 1) {
+              this.showBundleInfo(bundleNumber);
+            } else {
+              //console.log(`Batch # ${batchIndex} saved (bundle # ${bundleNumber})`);
+              batchIndex++;
+              this.handleBundleAsync(sql, bundleNumber, batchIndex);
+            }
 
           })
           .catch(function (error) {
@@ -137,16 +149,12 @@ class Import {
             });
             process.exit();
           });
-      }
-
-      if (this.importedBatchNumber === this.maxBundleSize) {
-        this.showBundleInfo(bundleNumber);
       } else {
-        //console.log(`Batch # ${batchIndex} saved (bundle # ${bundleNumber})`);
-        batchIndex++;
-        this.handleBundleAsync(sql, bundleNumber, batchIndex);
+        if (this.errorList[batchIndex] !== true) {
+          batchIndex++;
+          this.handleBundleAsync(sql, bundleNumber, batchIndex);
+        }
       }
-
     });
   }
 
@@ -187,7 +195,6 @@ class Import {
   }
 
   getDatabaseName() {
-
   }
 }
 
