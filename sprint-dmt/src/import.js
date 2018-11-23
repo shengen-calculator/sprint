@@ -151,8 +151,13 @@ class Import {
           });
       } else {
         if (this.errorList[batchIndex] !== true) {
-          batchIndex++;
-          this.handleBundleAsync(sql, bundleNumber, batchIndex);
+          if (batchIndex === this.maxBundleSize - 1) {
+            this.showBundleInfo(bundleNumber);
+          } else {
+            //console.log(`Batch # ${batchIndex} saved (bundle # ${bundleNumber})`);
+            batchIndex++;
+            this.handleBundleAsync(sql, bundleNumber, batchIndex);
+          }
         }
       }
     });
