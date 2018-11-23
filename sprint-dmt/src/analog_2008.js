@@ -3,8 +3,6 @@ import Import from './import';
 class AnalogImport extends Import {
   constructor(maxBatchSize, maxBundleSize, startTime) {
     super(maxBatchSize, maxBundleSize, startTime);
-    this.maxBatchSize = 10;
-    this.maxBundleSize = 3;
   }
 
   getSourceTableName() {
@@ -12,10 +10,11 @@ class AnalogImport extends Import {
   }
 
   getTargetCollectionName() {
-    return "analog";
+    return "analogs";
   }
+
   getDatabaseName() {
-    return "AnalogsDB";
+    return "AnalogsDB_0606";
   }
 
   getSelectQuery(bundleNumber, batchIndex) {
