@@ -12,7 +12,8 @@ export default function productReducer(state = initialState.products, action) {
         case types.LOAD_PRODUCTS_SUCCESS:
             return {
                 ...state,
-                items: action.products,
+                items: action.products.items,
+                type: action.products.type,
                 loading: false
             };
 

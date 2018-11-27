@@ -7,7 +7,7 @@ export function* getProducts(action) {
     try {
         const products = yield call(ProductApi.searchProducts, action.condition);
         yield put({type: types.LOAD_PRODUCTS_SUCCESS, products: products.data});
-        if(products.data.length === 0)
+        if(products.data.items.length === 0)
             toastr.warning("No results by your request", "Sorry");
     } catch (error) {
         yield put({type: types.LOAD_PRODUCTS_FAILURE, message: error.message});

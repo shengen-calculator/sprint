@@ -3,6 +3,7 @@ import SearchForm from './SearchForm';
 import {connect} from 'react-redux';
 import {bindActionCreators} from 'redux';
 import ProductList from './ProductList';
+import GroupedProductList from './GroupedProductList';
 import * as productAction from '../../actions/productActions';
 
 class HomePage extends Component {
@@ -73,7 +74,8 @@ class HomePage extends Component {
                     onSearch={this.search}
                     onChange={this.updateCondition}
                 />
-                <ProductList products={this.props.products.items}/>
+                {(this.props.products.type === 1)&&<ProductList products={this.props.products.items}/>}
+                {(this.props.products.type === 0)&&<GroupedProductList products={this.props.products.items}/>}
             </div>
         );
     }

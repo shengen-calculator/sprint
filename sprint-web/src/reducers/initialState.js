@@ -1,6 +1,7 @@
 export default {
     products:{
         items: [],
+        type: 0,
         loading: false
     },
     authentication: {

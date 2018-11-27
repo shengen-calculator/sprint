@@ -27,3 +27,7 @@ span.logout {
 span.logout:hover {
     cursor: pointer;
 }
+
+tr.grouped:hover {
+    cursor: pointer;
+}
