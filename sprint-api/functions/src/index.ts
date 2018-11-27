@@ -5,6 +5,10 @@ admin.initializeApp();
 
 
 export const products = functions.https.onCall(async (data, context) => {
+    let isStrictMatch = true;
+    if (data.number.slice(-1) === '*') {
+        isStrictMatch = false;
+    }
     try {
         const promises = [];
         if (!data.number) {
@@ -18,23 +22,89 @@ export const products = functions.https.onCall(async (data, context) => {
                 'while authenticated.');
         }
 
-        promises.push(admin.firestore().collection('products')
-            .where('shortNumber', '>=', data.number.toUpperCase())
-            .where('shortNumber', '<', next(data.number.toUpperCase()))
-            .orderBy('shortNumber')
-            .limit(100)
-            .get());
+        if (isStrictMatch) {
+
+            promises.push(admin.firestore().collection('products')
+                .where('shortNumber', '==', data.number.toUpperCase())
+                .limit(100)
+                .get());
+
+
+            promises.push(admin.firestore().collection('prices')
+                .where('shortNumber', '==', data.number.toUpperCase())
+                .limit(100)
+                .get());
+
+
+            promises.push(admin.firestore().collection('analogs')
+                .where('shortNumber', '==', data.number.toUpperCase())
+                .limit(100)
+                .get());
+
+        } else {
+            const number = data.number.slice(0, -1).toUpperCase();
+            const nextNumber = `${number}~`;
+
+            promises.push(admin.firestore().collection('products')
+                .where('shortNumber', '>=', number)
+                .where('shortNumber', '<', nextNumber)
+                .orderBy('shortNumber')
+                .limit(1000)
+                .get());
+
+
+            promises.push(admin.firestore().collection('prices')
+                .where('shortNumber', '>=', number)
+                .where('shortNumber', '<', nextNumber)
+                .orderBy('shortNumber')
+                .limit(1000)
+                .get());
+
+
+            promises.push(admin.firestore().collection('analogs')
+                .where('shortNumber', '>=', number)
+                .where('shortNumber', '<', nextNumber)
+                .orderBy('shortNumber')
+                .limit(1000)
+                .get());
+
+        }
+
 
         const snapshots = await Promise.all(promises);
-        const result = [];
+        const autoParts = [];
         snapshots.forEach(querySnapshot => {
             querySnapshot.forEach(snap => {
                 const row = snap.data();
                 row.id = snap.id;
-                result.push(row);
+                autoParts.push(row);
             });
         });
-        return result;
+        const groupResult = [];
+        const brandMap = new Map();
+        for (const val of autoParts) {
+            if (brandMap.has(`${val.brand.toUpperCase()}+${val.shortNumber}`)) {
+                if (val.description && val.description.length > 0) {
+                    if (!brandMap.get(`${val.brand.toUpperCase()}+${val.shortNumber}`).description ||
+                        brandMap.get(`${val.brand.toUpperCase()}+${val.shortNumber}`).description.length === 0) {
+                        brandMap.set(`${val.brand.toUpperCase()}+${val.shortNumber}`, val);
+                    } else {
+                        if (!brandMap.get(`${val.brand.toUpperCase()}+${val.shortNumber}`).analogId && val.analogId) {
+                            brandMap.set(`${val.brand.toUpperCase()}+${val.shortNumber}`, val);
+                        }
+                    }
+                }
+
+            } else {
+                brandMap.set(`${val.brand.toUpperCase()}+${val.shortNumber}`, val);
+            }
+        }
+
+        for (const val of brandMap) {
+            groupResult.push(val[1]);
+        }
+
+        return { type: 0, items: groupResult };
     }
 
     catch (error) {
@@ -42,13 +112,3 @@ export const products = functions.https.onCall(async (data, context) => {
         throw new functions.https.HttpsError('internal', error.message);
     }
 });
-
-
-function next(query: string): string {
-    if (query) {
-        const code = query.charCodeAt(query.length - 1) + 1;
-        return `${query.substring(0, query.length - 1)}${String.fromCharCode(code)}`;
-    } else {
-        return '';
-    }
-}
