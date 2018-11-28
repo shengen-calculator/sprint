@@ -16,6 +16,7 @@ class HomePage extends Component {
             condition: ''
         };
         this.search = this.search.bind(this);
+        this.select = this.select.bind(this);
         this.updateCondition = this.updateCondition.bind(this);
 
     }
@@ -23,19 +24,36 @@ class HomePage extends Component {
     componentWillMount() {
         if (this.props.match.params.numb) {
             this.setState({condition: this.props.match.params.numb});
-            this.props.actions.productRequst({
-                number: this.props.match.params.numb
-            })
+            if (this.props.match.params.brand) {
+                this.props.actions.productRequst({
+                    number: this.props.match.params.numb,
+                    brand: this.props.match.params.brand
+                })
+            } else {
+                this.props.actions.productRequst({
+                    number: this.props.match.params.numb
+                })
+            }
+
         }
     }
 
     componentWillReceiveProps(nextProps) {
-        if (this.props.match.params.numb !== nextProps.match.params.numb) {
+        if (this.props.match.params.numb !== nextProps.match.params.numb ||
+            this.props.match.params.brand !== nextProps.match.params.brand) {
             this.setState({condition: nextProps.match.params.numb});
-            this.props.actions.productRequst({
-                number: nextProps.match.params.numb
-
-            })
+            if (nextProps.match.params.brand) {
+                this.props.actions.productRequst({
+                    number: nextProps.match.params.numb,
+                    brand: nextProps.match.params.brand
+                })
+            } else {
+                if (this.props.match.params.numb !== nextProps.match.params.numb) {
+                    this.props.actions.productRequst({
+                        number: nextProps.match.params.numb
+                    })
+                }
+            }
         }
     }
 
@@ -51,6 +69,12 @@ class HomePage extends Component {
 
         this.props.history.push(`/search/${this.state.condition}`);
     };
+
+    select(event) {
+        const selected = this.props.products.items.filter(x =>
+            x.id === event.target.parentNode.id)[0];
+        this.props.history.push(`/search/${selected.shortNumber}/${selected.brand}`);
+    }
 
     searchFormIsValid() {
         let formIsValid = true;
@@ -74,8 +98,10 @@ class HomePage extends Component {
                     onSearch={this.search}
                     onChange={this.updateCondition}
                 />
-                {(this.props.products.type === 1)&&<ProductList products={this.props.products.items}/>}
-                {(this.props.products.type === 0)&&<GroupedProductList products={this.props.products.items}/>}
+                {(this.props.products.type === 1) && <ProductList
+                    products={this.props.products.items}/>}
+                {(this.props.products.type === 0) && <GroupedProductList
+                    onSelect={this.select} products={this.props.products.items}/>}
             </div>
         );
     }

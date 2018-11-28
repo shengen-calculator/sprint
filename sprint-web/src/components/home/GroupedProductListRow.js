@@ -1,8 +1,8 @@
 import React from 'react';
 
-const GroupedProductListRow = ({product}) => {
+const GroupedProductListRow = ({product, onSelect}) => {
     return (
-        <tr key={product.id} className="grouped">
+        <tr id={product.id} className="grouped" onClick={onSelect}>
             <td>{product.brand}</td>
             <td>{product.number}</td>
             <td>{product.description}</td>

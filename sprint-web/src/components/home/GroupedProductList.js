@@ -1,7 +1,7 @@
 import React from 'react';
 import GroupedProductListRow from './GroupedProductListRow';
 
-const GroupedProductList = ({products}) => {
+const GroupedProductList = ({products, onSelect}) => {
     if(products.length === 0)
         return "";
     return (
@@ -15,7 +15,8 @@ const GroupedProductList = ({products}) => {
             </thead>
             <tbody>
             {products.map(product =>
-                <GroupedProductListRow key={product.id} product={product}/>
+                <GroupedProductListRow key={product.id}
+                                       onSelect={onSelect} product={product}/>
             )}
             </tbody>
         </table>
