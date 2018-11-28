@@ -2,11 +2,11 @@ import React from 'react';
 import ProductListRow from './ProductListRow';
 
 const ProductList = ({products}) => {
-    if(products.length === 0)
+    if (products.length === 0)
         return "";
     return (
         <table className="table table-hover">
-            <thead>
+            <thead className="thead-dark">
             <tr>
                 <th scope="col">Brand</th>
                 <th scope="col">Number</th>
