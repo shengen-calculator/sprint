@@ -22,7 +22,7 @@ class CatalogImport extends Import {
           SELECT [Каталог запчастей].*, Брэнды.Брэнд, Остаток_.Остаток,
             ROW_NUMBER() OVER (ORDER BY [Каталог запчастей].[ID_Запчасти]) AS RowNum
           FROM [Каталог запчастей] INNER JOIN Брэнды 
-            ON [Каталог запчастей].ID_Брэнда = Брэнды.ID_Брэнда INNER JOIN Остаток_
+            ON [Каталог запчастей].ID_Брэнда = Брэнды.ID_Брэнда LEFT JOIN Остаток_
             ON [Каталог запчастей].ID_Запчасти = Остаток_.ID_Запчасти) AS Catalog
         WHERE Catalog.RowNum BETWEEN ${shift + 1} AND ${shift + this.maxBatchSize}`;
 
