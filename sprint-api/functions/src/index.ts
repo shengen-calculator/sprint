@@ -10,7 +10,6 @@ export const products = functions.https.onCall(async (data, context) => {
         isStrictMatch = false;
     }
     try {
-        const promises = [];
         if (!data.number) {
             throw new functions.https.HttpsError('invalid-argument',
                 'The function must be called with one arguments "text" containing the condition for search.');
@@ -24,30 +23,175 @@ export const products = functions.https.onCall(async (data, context) => {
 
         if (data.brand) {
             // second step
-            const items = [];
+            const productItems = [];
+            const productAnalogItems = [];
+            const productGroupedAnalogItems = [];
+            const priceItems = [];
+
             const productSnapshot = await admin.firestore().collection('products')
                 .where('shortNumber', '==', data.number)
                 .where('brand', '==', data.brand)
-                .limit(100)
+                .limit(200)
                 .get();
 
             productSnapshot.forEach(snap => {
                 const row = snap.data();
                 row.id = snap.id;
-                items.push(row);
+                productItems.push(row);
             });
 
+            if (productItems.length > 0) {
+                const productWithAnalogs = productItems.filter(x => x.analogId > 0);
 
+                if (productWithAnalogs.length > 0) {
 
+                    const productAnalogSnapshot = await admin.firestore().collection('products')
+                        .where('analogId', '==', productWithAnalogs[0].analogId)
+                        .limit(200)
+                        .get();
 
+                    productAnalogSnapshot.forEach(snap => {
+                        const row = snap.data();
+                        row.id = snap.id;
+                        row.type = 0;
+                        productAnalogItems.push(row);
+                    });
+
+                    //group by brand and number
+
+                    const itemMap = new Map();
+                    for (const val of productAnalogItems) {
+                        if (!itemMap.has(`${val.brand.toUpperCase()}+${val.shortNumber}`)) {
+                            itemMap.set(`${val.brand.toUpperCase()}+${val.shortNumber}`, val);
+                        }
+                    }
+
+                    for (const val of itemMap) {
+                        productGroupedAnalogItems.push(val[1]);
+                    }
+
+                    //get list of analog
+                    const promises = [];
+
+                    for (const val of productGroupedAnalogItems) {
+                        promises.push(admin.firestore().collection('analogs')
+                            .where('shortNumber', '==', val.shortNumber.toUpperCase())
+                            .where('brand', '==', val.brand.toUpperCase())
+                            .limit(500)
+                            .get());
+                    }
+                    const analogSnapshots = await Promise.all(promises);
+                    itemMap.clear(); //prepare map for analog collection
+
+                    analogSnapshots.forEach(querySnapshot => {
+                        querySnapshot.forEach(snap => {
+                            const row = snap.data();
+                            if (!itemMap.has(`${row.analogBrand.toUpperCase()}+${row.analogShortNumber}`)) {
+                                itemMap.set(`${row.analogBrand.toUpperCase()}+${row.analogShortNumber}`, row);
+                            }
+                        });
+                    });
+                    //get prices
+                    const pricePromises = [];
+                    if (!itemMap.has(`${data.brand.toUpperCase()}+${data.number}`)) {
+                        pricePromises.push(admin.firestore().collection('prices')
+                            .where('shortNumber', '==', data.number.toUpperCase())
+                            .where('brand', '==', data.brand.toUpperCase())
+                            .limit(500)
+                            .get());
+                    }
+
+                    for (const val of itemMap) {
+                        pricePromises.push(admin.firestore().collection('prices')
+                            .where('shortNumber', '==', val[1].analogShortNumber.toUpperCase())
+                            .where('brand', '==', val[1].analogBrand.toUpperCase())
+                            .limit(500)
+                            .get());
+                    }
+
+                    const priceSnapshots = await Promise.all(pricePromises);
+
+                    priceSnapshots.forEach(querySnapshot => {
+                        querySnapshot.forEach(snap => {
+                            const row = snap.data();
+                            if (row.brand.toUpperCase() === data.brand.toUpperCase() &&
+                                row.shortNumber.toUpperCase() === data.number.toUpperCase()) {
+                                row.type = 1;
+                            } else {
+                                row.type = 2;
+                            }
+                            priceItems.push(row);
+                        });
+                    });
+                }
+            } else {
+                // nothing in catalog
+                const analogSnapshots = await admin.firestore().collection('analogs')
+                    .where('shortNumber', '==', data.number.toUpperCase())
+                    .where('brand', '==', data.brand.toUpperCase())
+                    .limit(500)
+                    .get();
+
+                const itemMap = new Map(); //prepare map for analog collection
+                analogSnapshots.forEach(snap => {
+                    const row = snap.data();
+                    if (!itemMap.has(`${row.analogBrand.toUpperCase()}+${row.analogShortNumber}`)) {
+                        itemMap.set(`${row.analogBrand.toUpperCase()}+${row.analogShortNumber}`, row);
+                    }
+                });
+
+                //get prices
+                const pricePromises = [];
+
+                if (!itemMap.has(`${data.brand.toUpperCase()}+${data.number}`)) {
+                    pricePromises.push(admin.firestore().collection('prices')
+                        .where('shortNumber', '==', data.number.toUpperCase())
+                        .where('brand', '==', data.brand.toUpperCase())
+                        .limit(500)
+                        .get());
+                }
+                console.log(itemMap);
+                for (const val of itemMap) {
+                    pricePromises.push(admin.firestore().collection('prices')
+                        .where('shortNumber', '==', val[1].analogShortNumber.toUpperCase())
+                        .where('brand', '==', val[1].analogBrand.toUpperCase())
+                        .limit(500)
+                        .get());
+                }
+
+                const priceSnapshots = await Promise.all(pricePromises);
+
+                priceSnapshots.forEach(querySnapshot => {
+                    querySnapshot.forEach(snap => {
+                        const row = snap.data();
+                        if (row.brand.toUpperCase() === data.brand.toUpperCase() &&
+                            row.shortNumber.toUpperCase() === data.number.toUpperCase()) {
+                            row.type = 1;
+                        } else {
+                            row.type = 2;
+                        }
+                        priceItems.push(row);
+                    });
+                });
+            }
 
             return {
                 type: 1,
-                items: items
+                items: [...productAnalogItems.filter(x => x.availability > 0),
+                    ...priceItems.sort(function (a, b) {
+                        if (a.type > b.type) {
+                            return 1;
+                        }
+                        if (a.type < b.type) {
+                            return -1;
+                        }
+                        return 0;
+                    })
+                ]
             }
         } else {
             // first step
-
+            const promises = [];
             if (isStrictMatch) {
 
                 promises.push(admin.firestore().collection('products')
@@ -107,26 +251,26 @@ export const products = functions.https.onCall(async (data, context) => {
                 });
             });
             const groupResult = [];
-            const brandMap = new Map();
+            const itemMap = new Map();
             for (const val of autoParts) {
-                if (brandMap.has(`${val.brand.toUpperCase()}+${val.shortNumber}`)) {
+                if (itemMap.has(`${val.brand.toUpperCase()}+${val.shortNumber}`)) {
                     if (val.description && val.description.length > 0) {
-                        if (!brandMap.get(`${val.brand.toUpperCase()}+${val.shortNumber}`).description ||
-                            brandMap.get(`${val.brand.toUpperCase()}+${val.shortNumber}`).description.length === 0) {
-                            brandMap.set(`${val.brand.toUpperCase()}+${val.shortNumber}`, val);
+                        if (!itemMap.get(`${val.brand.toUpperCase()}+${val.shortNumber}`).description ||
+                            itemMap.get(`${val.brand.toUpperCase()}+${val.shortNumber}`).description.length === 0) {
+                            itemMap.set(`${val.brand.toUpperCase()}+${val.shortNumber}`, val);
                         } else {
-                            if (!brandMap.get(`${val.brand.toUpperCase()}+${val.shortNumber}`).analogId && val.analogId) {
-                                brandMap.set(`${val.brand.toUpperCase()}+${val.shortNumber}`, val);
+                            if (!itemMap.get(`${val.brand.toUpperCase()}+${val.shortNumber}`).analogId && val.analogId) {
+                                itemMap.set(`${val.brand.toUpperCase()}+${val.shortNumber}`, val);
                             }
                         }
                     }
 
                 } else {
-                    brandMap.set(`${val.brand.toUpperCase()}+${val.shortNumber}`, val);
+                    itemMap.set(`${val.brand.toUpperCase()}+${val.shortNumber}`, val);
                 }
             }
 
-            for (const val of brandMap) {
+            for (const val of itemMap) {
                 groupResult.push(val[1]);
             }
 
