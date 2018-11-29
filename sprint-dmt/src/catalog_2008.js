@@ -19,10 +19,11 @@ class CatalogImport extends Import {
     return `
         SELECT *
         FROM (
-          SELECT [Каталог запчастей].*, Брэнды.Брэнд, 
+          SELECT [Каталог запчастей].*, Брэнды.Брэнд, Остаток_.Остаток,
             ROW_NUMBER() OVER (ORDER BY [Каталог запчастей].[ID_Запчасти]) AS RowNum
           FROM [Каталог запчастей] INNER JOIN Брэнды 
-            ON [Каталог запчастей].ID_Брэнда = Брэнды.ID_Брэнда) AS Catalog
+            ON [Каталог запчастей].ID_Брэнда = Брэнды.ID_Брэнда INNER JOIN Остаток_
+            ON [Каталог запчастей].ID_Запчасти = Остаток_.ID_Запчасти) AS Catalog
         WHERE Catalog.RowNum BETWEEN ${shift + 1} AND ${shift + this.maxBatchSize}`;
 
   }
@@ -34,7 +35,8 @@ class CatalogImport extends Import {
       shortNumber: row['NAME'].trim().toUpperCase(),
       description: Import.trimString(row['Описание']),
       analogId: row['ID_аналога'],
-      price: row['Цена']
+      price: row['Цена'],
+      availability: row['Остаток']
     };
   }
 }

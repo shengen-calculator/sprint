@@ -34,7 +34,8 @@ class PriceImport extends Import {
       shortNumber: row['Name'].trim().toUpperCase(),
       description: Import.trimString(row['Описание']),
       vendor: row['Сокращенное название'].trim(),
-      price: row['Цена']
+      price: row['Цена'],
+      availability: row['Наличие'].trim()
     };
   }
 }
