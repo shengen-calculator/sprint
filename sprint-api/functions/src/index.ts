@@ -73,120 +73,34 @@ export const products = functions.https.onCall(async (data, context) => {
 
                     //logger
                     let endTime = new Date();
-                    console.log( `By analogId ${(endTime.getTime() - startTime.getTime()) / 1000} sec. ${productGroupedAnalogItems.length}`);
+                    console.log(`By analogId ${(endTime.getTime() - startTime.getTime()) / 1000} sec. ${productGroupedAnalogItems.length}`);
 
                     //get list of analog
-                    const promises = [];
-
-                    for (const val of productGroupedAnalogItems) {
-                        promises.push(admin.firestore().collection('analogs')
-                            .where('shortNumber', '==', val.shortNumber.toUpperCase())
-                            .where('brand', '==', val.brand.toUpperCase())
-                            .limit(500)
-                            .get());
-                    }
-                    const analogSnapshots = await Promise.all(promises);
-                    itemMap.clear(); //prepare map for analog collection
-
-                    analogSnapshots.forEach(querySnapshot => {
-                        querySnapshot.forEach(snap => {
-                            const row = snap.data();
-                            if (!itemMap.has(`${row.analogBrand.toUpperCase()}+${row.analogShortNumber}`)) {
-                                itemMap.set(`${row.analogBrand.toUpperCase()}+${row.analogShortNumber}`, row);
-                            }
-                        });
-                    });
+                    await getListAnalog(productGroupedAnalogItems, itemMap);
 
                     //logger
                     endTime = new Date();
-                    console.log( `Analogs by brand and number ${(endTime.getTime() - startTime.getTime()) / 1000} sec. ${itemMap.size}`);
+                    console.log(`Analogs by brand and number ${(endTime.getTime() - startTime.getTime()) / 1000} sec. ${itemMap.size}`);
 
                     //get prices
-                    const pricePromises = [];
-                    if (!itemMap.has(`${data.brand.toUpperCase()}+${data.number}`)) {
-                        pricePromises.push(admin.firestore().collection('prices')
-                            .where('shortNumber', '==', data.number.toUpperCase())
-                            .where('brand', '==', data.brand.toUpperCase())
-                            .limit(500)
-                            .get());
-                    }
-
-                    for (const val of itemMap) {
-                        pricePromises.push(admin.firestore().collection('prices')
-                            .where('shortNumber', '==', val[1].analogShortNumber.toUpperCase())
-                            .where('brand', '==', val[1].analogBrand.toUpperCase())
-                            .limit(500)
-                            .get());
-                    }
-
-                    const priceSnapshots = await Promise.all(pricePromises);
-
-
-                    priceSnapshots.forEach(querySnapshot => {
-                        querySnapshot.forEach(snap => {
-                            const row = snap.data();
-                            if (row.brand.toUpperCase() === data.brand.toUpperCase() &&
-                                row.shortNumber.toUpperCase() === data.number.toUpperCase()) {
-                                row.type = 1;
-                            } else {
-                                row.type = 2;
-                            }
-                            priceItems.push(row);
-                        });
-                    });
+                    await getPrices(data, priceItems, itemMap);
                     //logger
                     endTime = new Date();
-                    console.log( `Prices by analog ${(endTime.getTime() - startTime.getTime()) / 1000} sec. ${priceItems.length}`);
+                    console.log(`Prices by analog ${(endTime.getTime() - startTime.getTime()) / 1000} sec. ${priceItems.length}`);
                 }
             } else {
                 // nothing in catalog
-                const analogSnapshots = await admin.firestore().collection('analogs')
-                    .where('shortNumber', '==', data.number.toUpperCase())
-                    .where('brand', '==', data.brand.toUpperCase())
-                    .limit(500)
-                    .get();
 
                 const itemMap = new Map(); //prepare map for analog collection
-                analogSnapshots.forEach(snap => {
-                    const row = snap.data();
-                    if (!itemMap.has(`${row.analogBrand.toUpperCase()}+${row.analogShortNumber}`)) {
-                        itemMap.set(`${row.analogBrand.toUpperCase()}+${row.analogShortNumber}`, row);
-                    }
+
+                productGroupedAnalogItems.push({
+                    shortNumber: data.number,
+                    brand: data.brand
                 });
+                await getListAnalog(productGroupedAnalogItems, itemMap);
 
                 //get prices
-                const pricePromises = [];
-
-                if (!itemMap.has(`${data.brand.toUpperCase()}+${data.number}`)) {
-                    pricePromises.push(admin.firestore().collection('prices')
-                        .where('shortNumber', '==', data.number.toUpperCase())
-                        .where('brand', '==', data.brand.toUpperCase())
-                        .limit(500)
-                        .get());
-                }
-
-                for (const val of itemMap) {
-                    pricePromises.push(admin.firestore().collection('prices')
-                        .where('shortNumber', '==', val[1].analogShortNumber.toUpperCase())
-                        .where('brand', '==', val[1].analogBrand.toUpperCase())
-                        .limit(500)
-                        .get());
-                }
-
-                const priceSnapshots = await Promise.all(pricePromises);
-
-                priceSnapshots.forEach(querySnapshot => {
-                    querySnapshot.forEach(snap => {
-                        const row = snap.data();
-                        if (row.brand.toUpperCase() === data.brand.toUpperCase() &&
-                            row.shortNumber.toUpperCase() === data.number.toUpperCase()) {
-                            row.type = 1;
-                        } else {
-                            row.type = 2;
-                        }
-                        priceItems.push(row);
-                    });
-                });
+                await getPrices(data, priceItems, itemMap);
             }
 
             return {
@@ -317,3 +231,69 @@ export const products = functions.https.onCall(async (data, context) => {
         throw new functions.https.HttpsError('internal', error.message);
     }
 });
+
+/*
+function hashCode(s) {
+    for (let i = 0, h = 0; i < s.length; i++)
+        h = Math.imul(31, h) + s.charCodeAt(i) | 0;
+    return h;
+}*/
+
+async function getListAnalog(productGroupedAnalogItems, itemMap) {
+    const promises = [];
+
+    for (const val of productGroupedAnalogItems) {
+        promises.push(admin.firestore().collection('analogs')
+            .where('shortNumber', '==', val.shortNumber.toUpperCase())
+            .where('brand', '==', val.brand.toUpperCase())
+            .limit(500)
+            .get());
+    }
+    const analogSnapshots = await Promise.all(promises);
+    itemMap.clear(); //prepare map for analog collection
+
+    analogSnapshots.forEach(querySnapshot => {
+        querySnapshot.forEach(snap => {
+            const row = snap.data();
+            if (!itemMap.has(`${row.analogBrand.toUpperCase()}+${row.analogShortNumber}`)) {
+                itemMap.set(`${row.analogBrand.toUpperCase()}+${row.analogShortNumber}`, row);
+            }
+        });
+    });
+}
+
+async function getPrices(data, priceItems, itemMap) {
+    const pricePromises = [];
+    if (!itemMap.has(`${data.brand.toUpperCase()}+${data.number}`)) {
+        pricePromises.push(admin.firestore().collection('prices')
+            .where('shortNumber', '==', data.number.toUpperCase())
+            .where('brand', '==', data.brand.toUpperCase())
+            .limit(500)
+            .get());
+    }
+
+    for (const val of itemMap) {
+        pricePromises.push(admin.firestore().collection('prices')
+            .where('shortNumber', '==', val[1].analogShortNumber.toUpperCase())
+            .where('brand', '==', val[1].analogBrand.toUpperCase())
+            .limit(500)
+            .get());
+    }
+
+    const priceSnapshots = await Promise.all(pricePromises);
+
+
+    priceSnapshots.forEach(querySnapshot => {
+        querySnapshot.forEach(snap => {
+            const row = snap.data();
+            if (row.brand.toUpperCase() === data.brand.toUpperCase() &&
+                row.shortNumber.toUpperCase() === data.number.toUpperCase()) {
+                row.type = 1;
+            } else {
+                row.type = 2;
+            }
+            priceItems.push(row);
+        });
+    });
+
+}
