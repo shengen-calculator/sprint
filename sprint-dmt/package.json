@@ -6,6 +6,7 @@
     "import:catalog": "babel-node src/import-runner.js catalog",
     "import:price": "babel-node src/import-runner.js price",
     "import:analog": "babel-node src/import-runner.js analog",
+    "delete": "babel-node src/delete-collection.js",
     "lint": "esw src --color",
     "lint:watch": "npm run lint -- --watch"
   },
@@ -38,6 +39,7 @@
     "mssql": "4.2.1"
   },
   "dependencies": {
+    "firebase-tools": "^6.1.1",
     "numeral": "^2.0.6",
     "winston": "^3.1.0"
   }

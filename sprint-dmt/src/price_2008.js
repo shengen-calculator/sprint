@@ -36,7 +36,7 @@ class PriceImport extends Import {
       description: Import.trimString(row['Описание']),
       vendor: row['Сокращенное название'].trim(),
       price: row['Цена'],
-      availability: row['Наличие'].trim(),
+      availability: Import.trimString(row['Наличие']),
       hash: Import.hashCode(`${row['Брэнд'].trim()}+${row['Name'].trim().toUpperCase()}`)
     };
   }
