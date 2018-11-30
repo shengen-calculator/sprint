@@ -9,6 +9,7 @@ export const products = functions.https.onCall(async (data, context) => {
     if (data.number.slice(-1) === '*') {
         isStrictMatch = false;
     }
+    const startTime = new Date();
     try {
         if (!data.number) {
             throw new functions.https.HttpsError('invalid-argument',
@@ -70,6 +71,10 @@ export const products = functions.https.onCall(async (data, context) => {
                         productGroupedAnalogItems.push(val[1]);
                     }
 
+                    //logger
+                    let endTime = new Date();
+                    console.log( `By analogId ${(endTime.getTime() - startTime.getTime()) / 1000} sec. ${productGroupedAnalogItems.length}`);
+
                     //get list of analog
                     const promises = [];
 
@@ -91,6 +96,11 @@ export const products = functions.https.onCall(async (data, context) => {
                             }
                         });
                     });
+
+                    //logger
+                    endTime = new Date();
+                    console.log( `Analogs by brand and number ${(endTime.getTime() - startTime.getTime()) / 1000} sec. ${itemMap.size}`);
+
                     //get prices
                     const pricePromises = [];
                     if (!itemMap.has(`${data.brand.toUpperCase()}+${data.number}`)) {
@@ -111,6 +121,7 @@ export const products = functions.https.onCall(async (data, context) => {
 
                     const priceSnapshots = await Promise.all(pricePromises);
 
+
                     priceSnapshots.forEach(querySnapshot => {
                         querySnapshot.forEach(snap => {
                             const row = snap.data();
@@ -123,6 +134,9 @@ export const products = functions.https.onCall(async (data, context) => {
                             priceItems.push(row);
                         });
                     });
+                    //logger
+                    endTime = new Date();
+                    console.log( `Prices by analog ${(endTime.getTime() - startTime.getTime()) / 1000} sec. ${priceItems.length}`);
                 }
             } else {
                 // nothing in catalog
@@ -150,7 +164,7 @@ export const products = functions.https.onCall(async (data, context) => {
                         .limit(500)
                         .get());
                 }
-                console.log(itemMap);
+
                 for (const val of itemMap) {
                     pricePromises.push(admin.firestore().collection('prices')
                         .where('shortNumber', '==', val[1].analogShortNumber.toUpperCase())
