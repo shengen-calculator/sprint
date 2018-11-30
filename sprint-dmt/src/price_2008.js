@@ -1,5 +1,6 @@
 import Import from './import';
 
+
 class PriceImport extends Import {
   constructor(maxBatchSize, maxBundleSize, startTime) {
     super(maxBatchSize, maxBundleSize, startTime);
@@ -35,7 +36,8 @@ class PriceImport extends Import {
       description: Import.trimString(row['Описание']),
       vendor: row['Сокращенное название'].trim(),
       price: row['Цена'],
-      availability: row['Наличие'].trim()
+      availability: row['Наличие'].trim(),
+      hash: Import.hashCode(`${row['Брэнд'].trim()}+${row['Name'].trim().toUpperCase()}`)
     };
   }
 }
