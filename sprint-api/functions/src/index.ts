@@ -232,12 +232,13 @@ export const products = functions.https.onCall(async (data, context) => {
     }
 });
 
-/*
+
 function hashCode(s) {
-    for (let i = 0, h = 0; i < s.length; i++)
+    let h = 0;
+    for (let i = 0; i < s.length; i++)
         h = Math.imul(31, h) + s.charCodeAt(i) | 0;
     return h;
-}*/
+}
 
 async function getListAnalog(productGroupedAnalogItems, itemMap) {
     const promises = [];
@@ -266,16 +267,16 @@ async function getPrices(data, priceItems, itemMap) {
     const pricePromises = [];
     if (!itemMap.has(`${data.brand.toUpperCase()}+${data.number}`)) {
         pricePromises.push(admin.firestore().collection('prices')
-            .where('shortNumber', '==', data.number.toUpperCase())
-            .where('brand', '==', data.brand.toUpperCase())
+            .where('hash', '==',
+                hashCode(`${data.brand.toUpperCase()}+${data.number.toUpperCase()}`))
             .limit(500)
             .get());
     }
 
     for (const val of itemMap) {
         pricePromises.push(admin.firestore().collection('prices')
-            .where('shortNumber', '==', val[1].analogShortNumber.toUpperCase())
-            .where('brand', '==', val[1].analogBrand.toUpperCase())
+            .where('hash', '==',
+                hashCode(`${val[1].analogBrand.toUpperCase()}+${val[1].analogShortNumber.toUpperCase()}`))
             .limit(500)
             .get());
     }
