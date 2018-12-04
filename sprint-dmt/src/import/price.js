@@ -1,4 +1,5 @@
 import Import from './import';
+import Util from '../util';
 
 class PriceImport extends Import {
   constructor(maxBatchSize, maxBundleSize, startTime) {
@@ -31,7 +32,7 @@ class PriceImport extends Import {
       brand: row['Брэнд'].trim(),
       number: row['Номер запчасти'].trim(),
       shortNumber: row['Name'].trim().toUpperCase(),
-      description: Import.trimString(row['Описание']),
+      description: Util.trimString(row['Описание']),
       price: row['Цена']
     };
   }

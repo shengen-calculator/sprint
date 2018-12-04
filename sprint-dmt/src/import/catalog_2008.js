@@ -1,4 +1,5 @@
 import Import from './import';
+import Util from '../util';
 
 class CatalogImport extends Import {
   constructor(maxBatchSize, maxBundleSize, startTime) {
@@ -33,7 +34,7 @@ class CatalogImport extends Import {
       brand: row['Брэнд'].trim(),
       number: row['Номер запчасти'].trim(),
       shortNumber: row['NAME'].trim().toUpperCase(),
-      description: Import.trimString(row['Описание']),
+      description: Util.trimString(row['Описание']),
       analogId: row['ID_аналога'],
       price: row['Цена'],
       availability: row['Остаток']
