@@ -1,9 +1,9 @@
 import chalk from 'chalk';
 import sql from 'mssql';
-import {configSource} from './mssql.connection';
-import {auth, user, password, database} from './firestore';
+import {configSource} from '../config/mssql.connection';
+import {auth, user, password, database} from '../config/firestore';
 import numeral from 'numeral';
-import {logger, infoLogger} from './logger';
+import {logger, infoLogger} from '../logger';
 
 /* eslint-disable no-console */
 

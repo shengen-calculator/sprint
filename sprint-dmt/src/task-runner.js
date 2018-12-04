@@ -3,17 +3,17 @@ import chalk from 'chalk';
 
 /* eslint-disable no-console */
 
-class ImportRunner {
+class TaskRunner {
   constructor() {
     this.threadLimit = 5;
     this.delay = 100;
     this.threadInWork = 0;
-    this.importType = process.argv[2];
+    this.taskType = process.argv[2];
     this.bundleStartNumber = Number.parseInt(process.argv[3]);
     this.bundleEndNumber = Number.parseInt(process.argv[4]);
   }
 
-  launchImport() {
+  launchTask() {
     if (this.bundleStartNumber >= 0) {
       if (this.bundleEndNumber > 0) {
         if (this.bundleStartNumber > this.bundleEndNumber) {
@@ -22,7 +22,7 @@ class ImportRunner {
         setTimeout(() => {
           while (this.threadInWork < this.threadLimit &&
           this.bundleStartNumber <= this.bundleEndNumber) {
-            const runner = fork('src/import-fabric.js', [this.importType, this.bundleStartNumber]);
+            const runner = fork('src/task-fabric.js', [this.taskType, this.bundleStartNumber]);
             this.threadInWork++;
             this.bundleStartNumber++;
             runner.send('start');
@@ -34,15 +34,15 @@ class ImportRunner {
           }
 
           if (this.bundleStartNumber <= this.bundleEndNumber) {
-            this.launchImport();
+            this.launchTask();
           }
 
         }, this.delay);
 
       } else {
         if (this.threadLimit > 0) {
-          const runner = fork('src/import-fabric.js',
-            [this.importType, this.bundleStartNumber]);
+          const runner = fork('src/task-fabric.js',
+            [this.taskType, this.bundleStartNumber]);
           runner.send('start');
           runner.on('message', num => {
             console.log(chalk.yellowBright(`Bundle ${num} done`));
@@ -52,7 +52,7 @@ class ImportRunner {
       }
 
     } else {
-      const runner = fork('src/import-fabric.js', [this.importType]);
+      const runner = fork('src/task-fabric.js', [this.taskType]);
       runner.send('start');
     }
 
@@ -67,5 +67,5 @@ class ImportRunner {
 
 }
 
-const importRunner = new ImportRunner();
-importRunner.launchImport();
+const taskRunner = new TaskRunner();
+taskRunner.launchTask();

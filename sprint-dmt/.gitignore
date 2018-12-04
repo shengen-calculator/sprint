@@ -40,5 +40,5 @@ jspm_packages
 .idea
 
 # Settings
-src/firestore.js
-src/mssql.connection.js
+src/config/firestore.js
+src/config/mssql.connection.js
