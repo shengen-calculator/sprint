@@ -6,6 +6,7 @@
     "import:catalog": "babel-node src/task-runner.js import:catalog",
     "import:price": "babel-node src/task-runner.js import:price",
     "import:analog": "babel-node src/task-runner.js import:analog",
+    "index:catalog": "babel-node src/index-runner.js index:catalog",
     "delete": "babel-node src/delete-collection.js",
     "lint": "esw src --color",
     "lint:watch": "npm run lint -- --watch"

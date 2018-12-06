@@ -1,5 +1,6 @@
 import {fork} from 'child_process';
 import chalk from 'chalk';
+import Util from 'util';
 
 /* eslint-disable no-console */
 
@@ -28,7 +29,7 @@ class TaskRunner {
             runner.send('start');
             runner.on('message', num => {
               console.log(chalk.yellowBright(`Bundle ${num} done`));
-              this.showUsedResources();
+              Util.showUsedResources();
               this.threadInWork--;
             });
           }
@@ -46,7 +47,7 @@ class TaskRunner {
           runner.send('start');
           runner.on('message', num => {
             console.log(chalk.yellowBright(`Bundle ${num} done`));
-            this.showUsedResources();
+            Util.showUsedResources();
           });
         }
       }
@@ -55,16 +56,7 @@ class TaskRunner {
       const runner = fork('src/task-fabric.js', [this.taskType]);
       runner.send('start');
     }
-
   }
-
-  showUsedResources() {
-    const used = process.memoryUsage();
-    for (let key in used) {
-      console.log(`${key} ${Math.round(used[key] / 1024 / 1024 * 100) / 100} MB`);
-    }
-  }
-
 }
 
 const taskRunner = new TaskRunner();
