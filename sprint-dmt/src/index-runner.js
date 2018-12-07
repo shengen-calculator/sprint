@@ -7,7 +7,7 @@ import Util from './util';
 
 class IndexRunner {
   constructor() {
-    this.threadLimit = 2;
+    this.threadLimit = 3;
     this.identityLine = [];
     this.delay = 100;
     this.threadInWork = 0;
@@ -16,6 +16,7 @@ class IndexRunner {
   }
 
   run() {
+    this.identityLine.push(1);
     const runner = fork('src/firestore-iterator.js');
     runner.send('start');
     runner.on('message', msg => {
@@ -31,7 +32,6 @@ class IndexRunner {
       if (this.threadInWork < this.threadLimit &&
         this.identityLine[this.currentIndex] &&
         this.identityLine[this.currentIndex] !== -1) {
-
         const runner = fork('src/task-fabric.js',
           [this.taskType, this.identityLine[this.currentIndex]]);
         this.threadInWork++;
