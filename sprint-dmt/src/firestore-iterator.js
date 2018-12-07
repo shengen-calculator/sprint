@@ -5,7 +5,7 @@ import {logger} from './logger';
 /* eslint-disable no-console */
 class Iterator {
   constructor () {
-    this.limit = 100;
+    this.bundleSize = 100;
   }
   Run() {
     auth.signInWithEmailAndPassword(user, password)
@@ -27,14 +27,14 @@ class Iterator {
     if(lastVisible) {
       productRef = database.collection("products").where('brand', '==','TESLA')
         .startAfter(lastVisible)
-        .limit(this.limit);
+        .limit(this.bundleSize);
     } else {
       productRef = database.collection("products").where('brand', '==','TESLA')
-        .limit(this.limit);
+        .limit(this.bundleSize);
     }
     const current = this;
     productRef.get().then(function(documentSnapshots) {
-      if(documentSnapshots.docs.length < current.limit) {
+      if(documentSnapshots.docs.length < current.bundleSize) {
         process.send(-1);
         process.exit();
       } else {

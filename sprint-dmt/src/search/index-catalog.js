@@ -5,9 +5,8 @@ import {auth, user, password, database} from '../config/firestore';
 
 class IndexCatalog {
   constructor() {
-    this.limit = 100;
     this.batchSize = 25;
-    this.bundleSize = 4;
+    this.batchQuantity = 4;
     this.currentBatch = 0;
   }
 
