@@ -8,6 +8,8 @@ class IndexCatalog {
     this.batchSize = 25;
     this.batchQuantity = 4;
     this.currentBatch = 0;
+    this.currentBatchLength = 0;
+    this.currentPos = 0;
   }
 
   RunIndexator() {
@@ -18,9 +20,10 @@ class IndexCatalog {
           if (process.argv[3] === '1') {
             this.HandleBundle();
           } else {
-            database.collection("products").doc(process.argv[3]).get().then((startDoc) => {
-              this.HandleBundle(startDoc);
-            })
+            database.collection("products").doc(process.argv[3]).get()
+              .then((startDoc) => {
+                this.HandleBundle(startDoc);
+              })
               .catch(e => {
                 console.log(chalk.red(`Get start doc error: ${e.message}`));
               })
@@ -43,30 +46,43 @@ class IndexCatalog {
         .limit(this.batchSize);
     }
     const current = this;
-    productRef.get().then(function (batchSnapshot) {
-      current.HandleBatch(batchSnapshot);
-      current.currentBatch++;
-      if (current.currentBatch < current.bundleSize &&
-        current.batchSize === batchSnapshot.docs.length) {
-        current.HandleBundle(batchSnapshot.docs[batchSnapshot.docs.length - 1])
-      } else {
-        process.send(`${process.argv[3]}`);
-        process.exit();
-      }
-    })
+    productRef.get()
+      .then(function (batchSnapshot) {
+        current.currentBatchLength = batchSnapshot.docs.length + current.currentBatchLength;
+        if(batchSnapshot.docs.length > 0) {
+          current.HandleBatch(batchSnapshot);
+        } else {
+          process.send(`${process.argv[3]}`);
+          process.exit();
+        }
 
+      })
   }
 
   HandleBatch(batchSnapshot) {
-    console.log(batchSnapshot.docs[0].id)
-
+    const current = this;
+    batchSnapshot.forEach(function(doc) {
+      current.HandlePosition(doc);
+    });
+    current.currentBatch++;
   }
 
   HandlePosition(doc) {
+    const position = doc.data();
+    this.currentPos++;
+    console.log(`${this.currentPos}  ${position.brand} - ${position.number}`);
+    if (this.currentBatch < this.batchQuantity) {
+      if(this.currentPos  === this.currentBatchLength &&
+        this.currentBatch !== this.batchQuantity - 1 ) {
+        this.HandleBundle(doc);
+      } else if (this.currentPos  === this.currentBatchLength&&
+        this.currentBatch === this.batchQuantity - 1) {
+        process.send(`${process.argv[3]}`);
+        process.exit();
+      }
+    }
 
   }
-
-
 }
 
 export default IndexCatalog;
