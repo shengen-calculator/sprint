@@ -1,5 +1,6 @@
 import chalk from 'chalk';
 import {auth, user, password, database} from '../config/firestore';
+import Util from '../util';
 
 /* eslint-disable no-console */
 
@@ -11,6 +12,7 @@ class IndexCatalog {
     this.currentBatchLength = 0;
     this.currentPos = 0;
     this.batchSnapshot = {};
+    this.batch = {};
   }
 
   RunIndexator() {
@@ -46,6 +48,7 @@ class IndexCatalog {
       productRef = database.collection("products").where('brand', '==', 'TESLA')
         .limit(this.batchSize);
     }
+    this.batch = database.batch();
     const current = this;
     productRef.get()
       .then(function (batchSnapshot) {
@@ -75,15 +78,18 @@ class IndexCatalog {
     this.currentPos++;
     console.log(`${this.currentPos}  ${position.brand} - ${position.number}`);
 
-    analogMap.set(1, "helloo....");
     const analogRef = database.collection("products").where('analogId', '==', position.analogId);
-    console.log(analogMap.get(1));
+    const current = this;
     analogRef.get()
       .then((analogSnapshot) => {
         analogSnapshot.forEach(function (a) {
           const analog = a.data();
-          console.log(`--------  ${analog.brand} - ${analog.number}`);
+          analogMap.set(Util.hashCode(`${analog.brand.toUpperCase()}+${analog.shortNumber}`), false);
+
         });
+
+        const ref = database.collection("products").doc(doc.id);
+        current.batch.set(ref, {analogs: [...analogMap.keys()]}, { merge: true });
 
         if (this.currentBatchLength > this.currentPos) {
           this.HandleBatch();
@@ -93,7 +99,10 @@ class IndexCatalog {
           if (this.currentPos === this.currentBatchLength &&
             this.currentBatch !== this.batchQuantity - 1) {
             this.currentBatch++;
-            this.HandleBundle(doc);
+            this.batch.commit().then(() => {
+              console.log(`batch saved`);
+              this.HandleBundle(doc);
+            });
           } else if (this.currentPos === this.currentBatchLength &&
             this.currentBatch === this.batchQuantity - 1) {
             process.send(`${process.argv[3]}`);
