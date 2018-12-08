@@ -7,7 +7,7 @@ import Util from './util';
 
 class IndexRunner {
   constructor() {
-    this.threadLimit = 1;
+    this.threadLimit = 3;
     this.identityLine = [];
     this.delay = 100;
     this.threadInWork = 0;

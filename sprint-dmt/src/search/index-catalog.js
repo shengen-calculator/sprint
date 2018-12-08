@@ -57,10 +57,12 @@ class IndexCatalog {
           current.batchSnapshot = batchSnapshot;
           current.HandleBatch();
         } else {
-          process.send(`${process.argv[3]}`);
-          process.exit();
+          current.batch.commit().then(() => {
+            console.log(`batch saved`);
+            process.send(`${process.argv[3]}`);
+            process.exit();
+          });
         }
-
       })
   }
 
@@ -76,7 +78,7 @@ class IndexCatalog {
     const position = doc.data();
     const analogMap = new Map();
     this.currentPos++;
-    console.log(`${this.currentPos}  ${position.brand} - ${position.number}`);
+    //console.log(`${this.currentPos}  ${position.brand} - ${position.number}`);
 
     const analogRef = database.collection("products").where('analogId', '==', position.analogId);
     const current = this;
@@ -84,12 +86,13 @@ class IndexCatalog {
       .then((analogSnapshot) => {
         analogSnapshot.forEach(function (a) {
           const analog = a.data();
+          //console.log(`              ${analog.brand} - ${analog.number}`);
           analogMap.set(Util.hashCode(`${analog.brand.toUpperCase()}+${analog.shortNumber}`), false);
 
         });
 
         const ref = database.collection("products").doc(doc.id);
-        current.batch.set(ref, {analogs: [...analogMap.keys()]}, { merge: true });
+        current.batch.set(ref, {analogs: [...analogMap.keys()]}, {merge: true});
 
         if (this.currentBatchLength > this.currentPos) {
           this.HandleBatch();
@@ -105,13 +108,15 @@ class IndexCatalog {
             });
           } else if (this.currentPos === this.currentBatchLength &&
             this.currentBatch === this.batchQuantity - 1) {
-            process.send(`${process.argv[3]}`);
-            process.exit();
+            this.batch.commit().then(() => {
+              console.log(`batch saved`);
+              process.send(`${process.argv[3]}`);
+              process.exit();
+            });
           }
         }
 
       });
-
   }
 }
 
