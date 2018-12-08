@@ -13,6 +13,7 @@ class IndexRunner {
     this.threadInWork = 0;
     this.taskType = process.argv[2];
     this.currentIndex = 0;
+    this.counter = 1;
   }
 
   run() {
@@ -36,10 +37,15 @@ class IndexRunner {
           [this.taskType, this.identityLine[this.currentIndex]]);
         this.threadInWork++;
         this.currentIndex++;
+        const startTime = new Date();
         runner.send('start');
-        runner.on('message', num => {
-          console.log(chalk.yellowBright(`Bundle ${num} done`));
+        runner.on('message', () => {
+          console.log(chalk.yellowBright(`Bundle ${this.counter} done`));
+          const endTime = new Date();
+          console.log(`Elapsed time: ${(endTime.getTime() -
+            startTime.getTime()) / 1000} sec.`);
           Util.showUsedResources();
+          this.counter++;
           this.threadInWork--;
         });
       }

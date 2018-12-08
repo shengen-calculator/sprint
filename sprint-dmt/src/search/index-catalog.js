@@ -58,7 +58,6 @@ class IndexCatalog {
           current.HandleBatch();
         } else {
           current.batch.commit().then(() => {
-            console.log(`batch saved`);
             process.send(`${process.argv[3]}`);
             process.exit();
           });
@@ -103,13 +102,11 @@ class IndexCatalog {
             this.currentBatch !== this.batchQuantity - 1) {
             this.currentBatch++;
             this.batch.commit().then(() => {
-              console.log(`batch saved`);
               this.HandleBundle(doc);
             });
           } else if (this.currentPos === this.currentBatchLength &&
             this.currentBatch === this.batchQuantity - 1) {
             this.batch.commit().then(() => {
-              console.log(`batch saved`);
               process.send(`${process.argv[3]}`);
               process.exit();
             });
