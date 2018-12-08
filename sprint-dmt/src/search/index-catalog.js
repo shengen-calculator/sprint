@@ -50,7 +50,7 @@ class IndexCatalog {
     productRef.get()
       .then(function (batchSnapshot) {
         current.currentBatchLength = batchSnapshot.docs.length + current.currentBatchLength;
-        if(batchSnapshot.docs.length > 0) {
+        if (batchSnapshot.docs.length > 0) {
           current.batchSnapshot = batchSnapshot;
           current.HandleBatch();
         } else {
@@ -64,7 +64,7 @@ class IndexCatalog {
   HandleBatch() {
     const index = this.currentPos - this.currentBatch * this.batchSize;
 
-    if(this.currentBatchLength > this.currentPos) {
+    if (this.currentBatchLength > this.currentPos) {
       this.HandlePosition(this.batchSnapshot.docs[index]);
     }
   }
@@ -73,34 +73,37 @@ class IndexCatalog {
     const position = doc.data();
     this.currentPos++;
     console.log(`${this.currentPos}  ${position.brand} - ${position.number}`);
-    if(this.currentBatchLength > this.currentPos) {
-      this.HandleBatch();
-      return;
-    }
-    if (this.currentBatch < this.batchQuantity) {
-      if(this.currentPos  === this.currentBatchLength &&
-        this.currentBatch !== this.batchQuantity - 1 ) {
-        this.currentBatch++;
-        this.HandleBundle(doc);
-      } else if (this.currentPos  === this.currentBatchLength&&
-        this.currentBatch === this.batchQuantity - 1) {
-        process.send(`${process.argv[3]}`);
-        process.exit();
-      }
-    }
+
+
+    const analogRef = database.collection("products").where('analogId', '==', position.analogId);
+
+    analogRef.get()
+      .then((analogSnapshot) => {
+        analogSnapshot.forEach(function (a) {
+          const analog = a.data();
+          console.log(`--------  ${analog.brand} - ${analog.number}`);
+        });
+
+        if (this.currentBatchLength > this.currentPos) {
+          this.HandleBatch();
+          return;
+        }
+        if (this.currentBatch < this.batchQuantity) {
+          if (this.currentPos === this.currentBatchLength &&
+            this.currentBatch !== this.batchQuantity - 1) {
+            this.currentBatch++;
+            this.HandleBundle(doc);
+          } else if (this.currentPos === this.currentBatchLength &&
+            this.currentBatch === this.batchQuantity - 1) {
+            process.send(`${process.argv[3]}`);
+            process.exit();
+          }
+        }
+
+      });
 
   }
 }
 
 export default IndexCatalog;
 
-/*
-
-const analogRef = database.collection("products").where('analogId', '==', position.analogId);
-
-analogRef.get()
-  .then((analogSnapshot) => {
-    analogSnapshot.forEach(function(a) {
-      const analog = a.data();
-      console.log(`--------  ${analog.brand} - ${analog.number}`);
-    });*/
