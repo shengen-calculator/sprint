@@ -71,12 +71,13 @@ class IndexCatalog {
 
   HandlePosition(doc) {
     const position = doc.data();
+    const analogMap = new Map();
     this.currentPos++;
     console.log(`${this.currentPos}  ${position.brand} - ${position.number}`);
 
-
+    analogMap.set(1, "helloo....");
     const analogRef = database.collection("products").where('analogId', '==', position.analogId);
-
+    console.log(analogMap.get(1));
     analogRef.get()
       .then((analogSnapshot) => {
         analogSnapshot.forEach(function (a) {
