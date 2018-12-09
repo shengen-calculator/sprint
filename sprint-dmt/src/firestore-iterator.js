@@ -5,7 +5,7 @@ import {logger} from './logger';
 /* eslint-disable no-console */
 class Iterator {
   constructor () {
-    this.bundleSize = 30000;
+    this.bundleSize = 10000;
   }
   Run() {
     auth.signInWithEmailAndPassword(user, password)
