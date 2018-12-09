@@ -1,7 +1,7 @@
 import {fork} from 'child_process';
 import chalk from 'chalk';
 import Util from './util';
-
+import {logger} from './logger';
 
 /* eslint-disable no-console */
 
@@ -47,6 +47,11 @@ class IndexRunner {
           Util.showUsedResources();
           this.counter++;
           this.threadInWork--;
+          logger.log({
+            level: 'info',
+            message: `Imported batch #${this.counter}. Elapsed time: ${(endTime.getTime() -
+              startTime.getTime()) / 1000} sec.`
+          });
         });
       }
 
