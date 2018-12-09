@@ -1,6 +1,7 @@
 import chalk from 'chalk';
 import {auth, user, password, database} from '../config/firestore';
 import Util from '../util';
+import {logger} from '../logger';
 
 /* eslint-disable no-console */
 
@@ -32,11 +33,19 @@ class IndexCatalog {
               })
               .catch(e => {
                 console.log(chalk.red(`Get start doc error: ${e.message}`));
+                logger.log({
+                  level: 'error',
+                  message: `Get start doc error: ${e.message}`
+                });
               })
           }
         })
         .catch(e => {
           console.log(chalk.red(`Firestore connection error: ${e.message}`));
+          logger.log({
+            level: 'error',
+            message: `Firestore connection error: ${e.message}`
+          });
         })
     }
   }
@@ -65,6 +74,13 @@ class IndexCatalog {
             process.exit();
           });
         }
+      })
+      .catch(e => {
+        console.log(chalk.red(`Get products error: ${e.message}`));
+        logger.log({
+          level: 'error',
+          message: `Get products error: ${e.message}`
+        });
       })
   }
 
@@ -124,6 +140,13 @@ class IndexCatalog {
           }
         }
       })
+      .catch(e => {
+        console.log(chalk.red(`Get analogs from analogs collection error: ${e.message}`));
+        logger.log({
+          level: 'error',
+          message: `Get analogs from analogs collection error: ${e.message}`
+        });
+      })
   }
 
   HandlePosition(doc) {
@@ -139,6 +162,13 @@ class IndexCatalog {
         this.analogSnapshot = analogSnapshot;
         this.analogIndex = 0;
         this.HandleAnalog(doc);
+      })
+      .catch(e => {
+        console.log(chalk.red(`Read products by analogId: ${e.message}`));
+        logger.log({
+          level: 'error',
+          message: `Read products by analogId: ${e.message}`
+        });
       });
   }
 }
