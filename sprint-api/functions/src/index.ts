@@ -25,15 +25,18 @@ export const products = functions.https.onCall(async (data, context) => {
         if (data.brand) {
             // second step
             const productItems = [];
-            const productAnalogItems = [];
-            const productGroupedAnalogItems = [];
             const priceItems = [];
 
+
             const productSnapshot = await admin.firestore().collection('products')
-                .where('shortNumber', '==', data.number)
-                .where('brand', '==', data.brand)
+                .where('analogs', "array-contains",
+                    hashCode(`${data.brand.toUpperCase()}+${data.number.toUpperCase()}`))
                 .limit(200)
                 .get();
+
+            const endTime = new Date();
+            console.log(`Get products ${(endTime.getTime() - startTime.getTime()) / 1000} sec.}`);
+
 
             productSnapshot.forEach(snap => {
                 const row = snap.data();
@@ -41,71 +44,10 @@ export const products = functions.https.onCall(async (data, context) => {
                 productItems.push(row);
             });
 
-            if (productItems.length > 0) {
-                const productWithAnalogs = productItems.filter(x => x.analogId > 0);
-
-                if (productWithAnalogs.length > 0) {
-
-                    const productAnalogSnapshot = await admin.firestore().collection('products')
-                        .where('analogId', '==', productWithAnalogs[0].analogId)
-                        .limit(200)
-                        .get();
-
-                    productAnalogSnapshot.forEach(snap => {
-                        const row = snap.data();
-                        row.id = snap.id;
-                        row.type = 0;
-                        productAnalogItems.push(row);
-                    });
-
-                    //group by brand and number
-
-                    const itemMap = new Map();
-                    for (const val of productAnalogItems) {
-                        if (!itemMap.has(`${val.brand.toUpperCase()}+${val.shortNumber}`)) {
-                            itemMap.set(`${val.brand.toUpperCase()}+${val.shortNumber}`, val);
-                        }
-                    }
-
-                    for (const val of itemMap) {
-                        productGroupedAnalogItems.push(val[1]);
-                    }
-
-                    //logger
-                    let endTime = new Date();
-                    console.log(`By analogId ${(endTime.getTime() - startTime.getTime()) / 1000} sec. ${productGroupedAnalogItems.length}`);
-
-                    //get list of analog
-                    await getListAnalog(productGroupedAnalogItems, itemMap);
-
-                    //logger
-                    endTime = new Date();
-                    console.log(`Analogs by brand and number ${(endTime.getTime() - startTime.getTime()) / 1000} sec. ${itemMap.size}`);
-
-                    //get prices
-                    await getPrices(data, priceItems, itemMap);
-                    //logger
-                    endTime = new Date();
-                    console.log(`Prices by analog ${(endTime.getTime() - startTime.getTime()) / 1000} sec. ${priceItems.length}`);
-                }
-            } else {
-                // nothing in catalog
-
-                const itemMap = new Map(); //prepare map for analog collection
-
-                productGroupedAnalogItems.push({
-                    shortNumber: data.number,
-                    brand: data.brand
-                });
-                await getListAnalog(productGroupedAnalogItems, itemMap);
-
-                //get prices
-                await getPrices(data, priceItems, itemMap);
-            }
 
             return {
                 type: 1,
-                items: [...productAnalogItems.filter(x => x.availability > 0),
+                items: [...productItems.filter(x => x.availability > 0),
                     ...priceItems.sort(function (a, b) {
                         if (a.type > b.type) {
                             return 1;
