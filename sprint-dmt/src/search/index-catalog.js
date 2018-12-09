@@ -7,8 +7,8 @@ import {logger} from '../logger';
 
 class IndexCatalog {
   constructor() {
-    this.batchSize = 25;
-    this.batchQuantity = 4;
+    this.batchSize = 500;
+    this.batchQuantity = 60;
     this.currentBatch = 0;
     this.currentBatchLength = 0;
     this.currentPos = 0;
@@ -53,11 +53,11 @@ class IndexCatalog {
   HandleBundle(startDoc) {
     let productRef;
     if (startDoc) {
-      productRef = database.collection("products").where('brand', '==', 'TESLA')
+      productRef = database.collection("products")
         .startAfter(startDoc)
         .limit(this.batchSize);
     } else {
-      productRef = database.collection("products").where('brand', '==', 'TESLA')
+      productRef = database.collection("products")
         .limit(this.batchSize);
     }
     this.batch = database.batch();
