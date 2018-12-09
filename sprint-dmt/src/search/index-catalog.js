@@ -12,6 +12,9 @@ class IndexCatalog {
     this.currentBatchLength = 0;
     this.currentPos = 0;
     this.batchSnapshot = {};
+    this.analogSnapshot = {};
+    this.analogIndex = 0;
+    this.analogMap = new Map();
     this.batch = {};
   }
 
@@ -73,49 +76,72 @@ class IndexCatalog {
     }
   }
 
+  HandleAnalog(doc) {
+
+    const analog = this.analogSnapshot.docs[this.analogIndex].data();
+    this.analogMap.set(Util.hashCode(
+      `${analog.brand.toUpperCase()}+${analog.shortNumber}`), false);
+    console.log(`   --${analog.brand} - ${analog.number}`);
+    this.analogIndex++;
+    if (this.analogSnapshot.docs.length > this.analogIndex) {
+      this.HandleAnalog(doc);
+    } else {
+      const ref = database.collection("products").doc(doc.id);
+      this.batch.set(ref, {analogs: [...this.analogMap.keys()]}, {merge: true});
+      if (this.currentBatchLength > this.currentPos) {
+        this.HandleBatch();
+        return;
+      }
+      if (this.currentBatch < this.batchQuantity) {
+        if (this.currentPos === this.currentBatchLength &&
+          this.currentBatch !== this.batchQuantity - 1) {
+          this.currentBatch++;
+          this.batch.commit().then(() => {
+            this.HandleBundle(doc);
+          });
+        } else if (this.currentPos === this.currentBatchLength &&
+          this.currentBatch === this.batchQuantity - 1) {
+          this.batch.commit().then(() => {
+            process.send(`${process.argv[3]}`);
+            process.exit();
+          });
+        }
+      }
+    }
+  }
+
   HandlePosition(doc) {
     const position = doc.data();
-    const analogMap = new Map();
+    this.analogMap.clear();
     this.currentPos++;
-    //console.log(`${this.currentPos}  ${position.brand} - ${position.number}`);
+    console.log(`${this.currentPos}  ${position.brand} - ${position.number}`);
 
-    const analogRef = database.collection("products").where('analogId', '==', position.analogId);
-    const current = this;
+    const analogRef = database.collection("products")
+      .where('analogId', '==', position.analogId);
     analogRef.get()
       .then((analogSnapshot) => {
-        analogSnapshot.forEach(function (a) {
-          const analog = a.data();
-          //console.log(`              ${analog.brand} - ${analog.number}`);
-          analogMap.set(Util.hashCode(`${analog.brand.toUpperCase()}+${analog.shortNumber}`), false);
-
-        });
-
-        const ref = database.collection("products").doc(doc.id);
-        current.batch.set(ref, {analogs: [...analogMap.keys()]}, {merge: true});
-
-        if (this.currentBatchLength > this.currentPos) {
-          this.HandleBatch();
-          return;
-        }
-        if (this.currentBatch < this.batchQuantity) {
-          if (this.currentPos === this.currentBatchLength &&
-            this.currentBatch !== this.batchQuantity - 1) {
-            this.currentBatch++;
-            this.batch.commit().then(() => {
-              this.HandleBundle(doc);
-            });
-          } else if (this.currentPos === this.currentBatchLength &&
-            this.currentBatch === this.batchQuantity - 1) {
-            this.batch.commit().then(() => {
-              process.send(`${process.argv[3]}`);
-              process.exit();
-            });
-          }
-        }
-
+        this.analogSnapshot = analogSnapshot;
+        this.analogIndex = 0;
+        this.HandleAnalog(doc);
       });
   }
 }
 
 export default IndexCatalog;
+
+
+/*         const bigAnalogRef = database.collection("analogs")
+           .where('brand', '==', analog.brand)
+           .where('brand', '==', analog.shortNumber);
+
+         bigAnalogRef.get()
+           .then((bigAnalogSnapshot) => {
+             bigAnalogSnapshot.forEach(function (ba) {
+               const bigAnalog = ba.data();
+               analogMap.set(Util.hashCode(
+                 `${bigAnalog.brand.toUpperCase()}+${bigAnalog.shortNumber}`), false);
+               console.log(`  **${bigAnalog.brand} - ${bigAnalog.number}`);
+
+             })
+           });*/
 

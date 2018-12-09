@@ -7,7 +7,7 @@ import Util from './util';
 
 class IndexRunner {
   constructor() {
-    this.threadLimit = 3;
+    this.threadLimit = 1;
     this.identityLine = [];
     this.delay = 100;
     this.threadInWork = 0;
@@ -42,8 +42,8 @@ class IndexRunner {
         runner.on('message', () => {
           console.log(chalk.yellowBright(`Bundle ${this.counter} done`));
           const endTime = new Date();
-          console.log(`Elapsed time: ${(endTime.getTime() -
-            startTime.getTime()) / 1000} sec.`);
+          console.log(chalk.yellow(`Elapsed time: ${(endTime.getTime() -
+            startTime.getTime()) / 1000} sec.`));
           Util.showUsedResources();
           this.counter++;
           this.threadInWork--;
