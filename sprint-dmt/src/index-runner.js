@@ -7,7 +7,7 @@ import {logger} from './logger';
 
 class IndexRunner {
   constructor() {
-    this.threadLimit = 1;
+    this.threadLimit = 200;
     this.identityLine = [];
     this.delay = 100;
     this.threadInWork = 0;

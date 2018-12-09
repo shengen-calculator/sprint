@@ -8,7 +8,7 @@ import {logger} from '../logger';
 class IndexCatalog {
   constructor() {
     this.batchSize = 500;
-    this.batchQuantity = 30;
+    this.batchQuantity = 2;
     this.currentBatch = 0;
     this.currentBatchLength = 0;
     this.currentPos = 0;
