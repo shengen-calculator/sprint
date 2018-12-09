@@ -97,7 +97,7 @@ class IndexCatalog {
     const analog = this.analogSnapshot.docs[this.analogIndex].data();
     this.analogMap.set(Util.hashCode(
       `${analog.brand.toUpperCase()}+${analog.shortNumber}`), false);
-    console.log(`   --${analog.brand} - ${analog.number}`);
+    //console.log(`   --${analog.brand} - ${analog.number}`);
     this.analogIndex++;
 
     const bigAnalogRef = database.collection("analogs")
