@@ -5,7 +5,7 @@ import {logger} from './logger';
 /* eslint-disable no-console */
 class Iterator {
   constructor () {
-    this.bundleSize = 1000;
+    this.bundleSize = 100;
   }
   Run() {
     auth.signInWithEmailAndPassword(user, password)
@@ -25,11 +25,11 @@ class Iterator {
   readBatch(lastVisible) {
     let productRef;
     if(lastVisible) {
-      productRef = database.collection("products")
+      productRef = database.collection("products").where("availability", ">", 0)
         .startAfter(lastVisible)
         .limit(this.bundleSize);
     } else {
-      productRef = database.collection("products")
+      productRef = database.collection("products").where("availability", ">", 0)
         .limit(this.bundleSize);
     }
     const current = this;

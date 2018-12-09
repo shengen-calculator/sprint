@@ -7,7 +7,7 @@ import {logger} from '../logger';
 
 class IndexCatalog {
   constructor() {
-    this.batchSize = 500;
+    this.batchSize = 50;
     this.batchQuantity = 2;
     this.currentBatch = 0;
     this.currentBatchLength = 0;
@@ -53,11 +53,11 @@ class IndexCatalog {
   HandleBundle(startDoc) {
     let productRef;
     if (startDoc) {
-      productRef = database.collection("products")
+      productRef = database.collection("products").where("availability", ">", 0)
         .startAfter(startDoc)
         .limit(this.batchSize);
     } else {
-      productRef = database.collection("products")
+      productRef = database.collection("products").where("availability", ">", 0)
         .limit(this.batchSize);
     }
     this.batch = database.batch();
@@ -110,7 +110,7 @@ class IndexCatalog {
           const bigAnalog = ba.data();
           current.analogMap.set(Util.hashCode(
             `${bigAnalog.analogBrand.toUpperCase()}+${bigAnalog.analogShortNumber}`), false);
-          console.log(`   --**${bigAnalog.analogBrand} - ${bigAnalog.analogShortNumber}`);
+          //console.log(`   --**${bigAnalog.analogBrand} - ${bigAnalog.analogShortNumber}`);
 
         });
 
