@@ -1,7 +1,8 @@
 import CatalogImport from './import/catalog_2008';
 import PriceImport from './import/price_2008';
 import AnalogImport from './import/analog_2008';
-import IndeCatalog from './search/index-catalog';
+import IndexCatalog from './search/index-catalog';
+import IndexPrice from './search/index-price';
 
 
 function init_TemplateMethod() {
@@ -18,8 +19,12 @@ function init_TemplateMethod() {
     analog.RunImport()
   }
   if (process.argv[2] === 'index:catalog') {
-    let indexCatalog = new IndeCatalog();
+    let indexCatalog = new IndexCatalog();
     indexCatalog.RunIndexator()
+  }
+  if (process.argv[2] === 'index:price') {
+    let indexPrice = new IndexPrice();
+    indexPrice.RunIndexator()
   }
 }
 

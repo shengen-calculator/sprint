@@ -25,11 +25,11 @@ class Iterator {
   readBatch(lastVisible) {
     let productRef;
     if(lastVisible) {
-      productRef = database.collection("products").where("availability", ">", 0)
+      productRef = database.collection("prices")
         .startAfter(lastVisible)
         .limit(this.bundleSize);
     } else {
-      productRef = database.collection("products").where("availability", ">", 0)
+      productRef = database.collection("prices")
         .limit(this.bundleSize);
     }
     const current = this;
