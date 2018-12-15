@@ -26,61 +26,98 @@ export const products = functions.https.onCall(async (data, context) => {
             // second step
             const productItems = [];
             const priceItems = [];
+            const promises = [];
 
-
-            const productSnapshot = await admin.firestore().collection('products')
+            promises.push(admin.firestore().collection('products')
                 .where('analogs', "array-contains",
                     hashCode(`${data.brand.toUpperCase()}+${data.number.toUpperCase()}`))
                 .limit(200)
-                .get();
+                .get());
 
-            let endTime = new Date();
-            console.log(`Get products ${(endTime.getTime() - startTime.getTime()) / 1000} sec.}`);
-
-
-            productSnapshot.forEach(snap => {
-                const row = snap.data();
-                row.id = snap.id;
-                productItems.push(row);
-            });
-
-
-            const priceSnapshot = await admin.firestore().collection('prices')
+            promises.push(admin.firestore().collection('prices')
                 .where('analogs', "array-contains",
                     hashCode(`${data.brand.toUpperCase()}+${data.number.toUpperCase()}`))
                 .limit(1000)
-                .get();
-
-            endTime = new Date();
-            console.log(`Get prices ${(endTime.getTime() - startTime.getTime()) / 1000} sec.}`);
+                .get());
 
 
-            priceSnapshot.forEach(snap => {
-                const row = snap.data();
-                row.id = snap.id;
-                if (row.brand.toUpperCase() === data.brand.toUpperCase() &&
-                    row.shortNumber.toUpperCase() === data.number.toUpperCase()) {
-                    row.type = 1;
-                } else {
-                    row.type = 2;
-                }
-                priceItems.push(row);
+            const snapshots = await Promise.all(promises);
 
+
+            const endTime = new Date();
+            console.log(`Get data  ${(endTime.getTime() - startTime.getTime()) / 1000} sec.}`);
+
+            let type = 0;
+
+            snapshots.forEach(querySnapshot => {
+                type++;
+                querySnapshot.forEach(snap => {
+                    if (type === 1) {
+                        const row = snap.data();
+                        row.id = snap.id;
+                        productItems.push(row);
+
+                    } else {
+                        const row = snap.data();
+                        if (row.brand.toUpperCase() === data.brand.toUpperCase() &&
+                            row.shortNumber.toUpperCase() === data.number.toUpperCase()) {
+                            row.type = 1;
+                        } else {
+                            row.type = 2;
+                        }
+                        priceItems.push(row);
+                    }
+
+                });
             });
-
 
             return {
                 type: 1,
-                items: [...productItems.filter(x => x.availability > 0),
-                    ...priceItems.sort(function (a, b) {
-                        if (a.type > b.type) {
+                items: [...productItems.filter(x => x.availability > 0)
+                    .sort(function (a, b) {
+                        if (a.brand > b.brand) {
                             return 1;
                         }
-                        if (a.type < b.type) {
+                        if (a.brand < b.brand) {
                             return -1;
                         }
+                        if (a.brand === b.brand) {
+                            if (a.shortNumber > b.shortNumber) {
+                                return 1;
+                            }
+                            if (a.shortNumber < b.shortNumber) {
+                                return -1;
+                            }
+                        }
                         return 0;
-                    })
+                    }),
+                    ...priceItems
+                        .sort(function (a, b) {
+                            if (a.type > b.type) {
+                                return 1;
+                            }
+                            if (a.type < b.type) {
+                                return -1;
+                            }
+                            if (a.type === b.type) {
+                                if (a.brand > b.brand) {
+                                    return 1;
+                                }
+                                if (a.brand < b.brand) {
+                                    return -1;
+                                }
+                                if (a.brand === b.brand) {
+                                    if (a.shortNumber > b.shortNumber) {
+                                        return 1;
+                                    }
+                                    if (a.shortNumber < b.shortNumber) {
+                                        return -1;
+                                    }
+                                }
+                                return 0;
+                            }
+                            return 0;
+                        })
                 ]
             }
         } else {
@@ -204,63 +241,4 @@ function hashCode(s) {
     for (let i = 0; i < s.length; i++)
         h = Math.imul(31, h) + s.charCodeAt(i) | 0;
     return h;
-}
-
-async function getListAnalog(productGroupedAnalogItems, itemMap) {
-    const promises = [];
-
-    for (const val of productGroupedAnalogItems) {
-        promises.push(admin.firestore().collection('analogs')
-            .where('shortNumber', '==', val.shortNumber.toUpperCase())
-            .where('brand', '==', val.brand.toUpperCase())
-            .limit(500)
-            .get());
-    }
-    const analogSnapshots = await Promise.all(promises);
-    itemMap.clear(); //prepare map for analog collection
-
-    analogSnapshots.forEach(querySnapshot => {
-        querySnapshot.forEach(snap => {
-            const row = snap.data();
-            if (!itemMap.has(`${row.analogBrand.toUpperCase()}+${row.analogShortNumber}`)) {
-                itemMap.set(`${row.analogBrand.toUpperCase()}+${row.analogShortNumber}`, row);
-            }
-        });
-    });
-}
-
-async function getPrices(data, priceItems, itemMap) {
-    const pricePromises = [];
-    if (!itemMap.has(`${data.brand.toUpperCase()}+${data.number}`)) {
-        pricePromises.push(admin.firestore().collection('prices')
-            .where('hash', '==',
-                hashCode(`${data.brand.toUpperCase()}+${data.number.toUpperCase()}`))
-            .limit(500)
-            .get());
-    }
-
-    for (const val of itemMap) {
-        pricePromises.push(admin.firestore().collection('prices')
-            .where('hash', '==',
-                hashCode(`${val[1].analogBrand.toUpperCase()}+${val[1].analogShortNumber.toUpperCase()}`))
-            .limit(500)
-            .get());
-    }
-
-    const priceSnapshots = await Promise.all(pricePromises);
-
-
-    priceSnapshots.forEach(querySnapshot => {
-        querySnapshot.forEach(snap => {
-            const row = snap.data();
-            if (row.brand.toUpperCase() === data.brand.toUpperCase() &&
-                row.shortNumber.toUpperCase() === data.number.toUpperCase()) {
-                row.type = 1;
-            } else {
-                row.type = 2;
-            }
-            priceItems.push(row);
-        });
-    });
-
 }
