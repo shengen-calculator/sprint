@@ -93,8 +93,11 @@ class IndexPrice {
   }
 
   HandleAnalog(doc) {
+    let analog = doc.data();
+    if(this.analogSnapshot)
+      analog = this.analogSnapshot.docs[this.analogIndex].data();
 
-    const analog = this.analogSnapshot.docs[this.analogIndex].data();
+
     this.analogMap.set(Util.hashCode(
       `${analog.brand.toUpperCase()}+${analog.shortNumber}`), false);
     //console.log(`   --${analog.brand} - ${analog.number}`);
@@ -114,7 +117,7 @@ class IndexPrice {
 
         });
 
-        if (current.analogSnapshot.docs.length > current.analogIndex) {
+        if (current.analogSnapshot && current.analogSnapshot.docs.length > current.analogIndex) {
           current.HandleAnalog(doc);
         } else {
           const ref = database.collection("prices").doc(doc.id);
@@ -179,6 +182,11 @@ class IndexPrice {
                 message: `Read products by analogId: ${e.message}`
               });
             });
+        } else {
+          this.analogSnapshot = undefined;
+          this.analogIndex = 0;
+          this.HandleAnalog(doc);
+
         }
 
       })
