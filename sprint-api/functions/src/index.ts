@@ -34,7 +34,7 @@ export const products = functions.https.onCall(async (data, context) => {
                 .limit(200)
                 .get();
 
-            const endTime = new Date();
+            let endTime = new Date();
             console.log(`Get products ${(endTime.getTime() - startTime.getTime()) / 1000} sec.}`);
 
 
@@ -42,6 +42,30 @@ export const products = functions.https.onCall(async (data, context) => {
                 const row = snap.data();
                 row.id = snap.id;
                 productItems.push(row);
+            });
+
+
+            const priceSnapshot = await admin.firestore().collection('prices')
+                .where('analogs', "array-contains",
+                    hashCode(`${data.brand.toUpperCase()}+${data.number.toUpperCase()}`))
+                .limit(1000)
+                .get();
+
+            endTime = new Date();
+            console.log(`Get prices ${(endTime.getTime() - startTime.getTime()) / 1000} sec.}`);
+
+
+            priceSnapshot.forEach(snap => {
+                const row = snap.data();
+                row.id = snap.id;
+                if (row.brand.toUpperCase() === data.brand.toUpperCase() &&
+                    row.shortNumber.toUpperCase() === data.number.toUpperCase()) {
+                    row.type = 1;
+                } else {
+                    row.type = 2;
+                }
+                priceItems.push(row);
+
             });
 
 
